@@ -2,6 +2,7 @@ package com.qoneqo.solitaire
 
 import android.os.Bundle
 import android.view.View
+import android.view.ViewGroup
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -17,12 +18,68 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tableauColumns: Array<LinearLayout>
     private lateinit var autoCompleteButton: Button
 
+    // animation state
+    private var isAnimating = false
+    private val animationQueue = mutableListOf<() -> Unit>()
+
     // Selection state
     private var selectedTableauColumn: Int = -1
     private var selectedCardIndex: Int = -1
     private var selectedFromWaste: Boolean = false
     private var selectedFoundationIndex: Int = -1 // NEW: Track selected foundation
 
+    private fun createCardViewFromSource(sourceView: View): ImageView {
+        val imageView = ImageView(this)
+
+        if (sourceView is ImageView) {
+            imageView.setImageDrawable(sourceView.drawable)
+            imageView.scaleType = sourceView.scaleType
+        } else {
+            // Fallback
+            imageView.setImageResource(R.drawable.card_back)
+            imageView.scaleType = ImageView.ScaleType.FIT_CENTER
+        }
+
+        return imageView
+    }
+    private fun performAnimatedMove(moveAction: () -> Boolean, sourceView: View? = null, targetView: View? = null) {
+        if (isAnimating) {
+            // Queue the animation
+            animationQueue.add { performAnimatedMove(moveAction, sourceView, targetView) }
+            return
+        }
+
+        if (sourceView != null && targetView != null) {
+            isAnimating = true
+
+            // Create a temporary card view for animation
+            val cardView = if (sourceView is ImageView) sourceView else createCardViewFromSource(sourceView)
+
+            CardAnimationHelper.animateCardMove(
+                sourceView = sourceView,
+                targetContainer = targetView as ViewGroup,
+                cardView = cardView as ImageView
+            ) {
+                // Execute the actual move after animation
+                moveAction()
+                updateUI()
+                checkWinCondition()
+                isAnimating = false
+
+                // Process next animation in queue
+                if (animationQueue.isNotEmpty()) {
+                    val nextAnimation = animationQueue.removeAt(0)
+                    nextAnimation()
+                }
+            }
+        } else {
+            // No animation, just perform the move
+            if (moveAction()) {
+                updateUI()
+                checkWinCondition()
+            }
+        }
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -79,22 +136,28 @@ class MainActivity : AppCompatActivity() {
 
         // Waste pile click - select/deselect waste card
         wastePile.setOnClickListener {
+            if (isAnimating) return@setOnClickListener
+
             val gameState = game.getGameState()
             if (gameState.waste.isNotEmpty()) {
                 if (selectedFromWaste) {
-                    // Deselect waste
                     clearSelection()
                 } else {
-                    // Select waste card
                     clearSelection()
                     selectedFromWaste = true
 
-                    // Try auto-move to foundation first
+                    // Try auto-move to foundation first with animation
                     for (i in 0..3) {
-                        if (game.moveWasteToFoundation(i)) {
+                        if (game.canMoveWasteToFoundation(i)) {
+                            val sourceView = wastePile.getChildAt(0)
+                            val targetView = foundations[i]
+
+                            performAnimatedMove(
+                                moveAction = { game.moveWasteToFoundation(i) },
+                                sourceView = sourceView,
+                                targetView = targetView
+                            )
                             clearSelection()
-                            updateUI()
-                            checkWinCondition()
                             return@setOnClickListener
                         }
                     }
@@ -106,30 +169,37 @@ class MainActivity : AppCompatActivity() {
         // Foundation clicks - UPDATED to handle selection and movement
         foundations.forEachIndexed { index, foundation ->
             foundation.setOnClickListener {
+                if (isAnimating) return@setOnClickListener
+
                 val gameState = game.getGameState()
 
                 if (selectedFromWaste) {
-                    // Move waste to foundation
-                    if (game.moveWasteToFoundation(index)) {
-                        clearSelection()
-                        updateUI()
-                        checkWinCondition()
-                    }
+                    val sourceView = wastePile.getChildAt(0)
+                    performAnimatedMove(
+                        moveAction = { game.moveWasteToFoundation(index) },
+                        sourceView = sourceView,
+                        targetView = foundation
+                    )
+                    clearSelection()
                 } else if (selectedTableauColumn != -1) {
-                    // Move tableau to foundation
-                    if (game.moveTableauToFoundation(selectedTableauColumn, index)) {
+                    val sourceColumn = tableauColumns[selectedTableauColumn]
+                    val sourceView = if (sourceColumn.childCount > 0)
+                        sourceColumn.getChildAt(sourceColumn.childCount - 1) else null
+
+                    if (sourceView != null) {
+                        performAnimatedMove(
+                            moveAction = { game.moveTableauToFoundation(selectedTableauColumn, index) },
+                            sourceView = sourceView,
+                            targetView = foundation
+                        )
                         clearSelection()
-                        updateUI()
-                        checkWinCondition()
                     }
                 } else if (selectedFoundationIndex != -1) {
-                    // Deselect if clicking the same foundation
                     if (selectedFoundationIndex == index) {
                         clearSelection()
                         updateUI()
                     }
                 } else {
-                    // Select foundation if it has cards
                     if (gameState.foundations[index].isNotEmpty()) {
                         selectedFoundationIndex = index
                         updateUI()
@@ -254,49 +324,69 @@ class MainActivity : AppCompatActivity() {
 
         return allFaceUp && !game.isGameWon()
     }
+    private fun performNextAutoMove() {
+        val gameState = game.getGameState()
 
-    private fun performAutoComplete() {
-        var movesMade = true
+        // Try to move from waste to foundation with animation
+        if (gameState.waste.isNotEmpty()) {
+            for (foundationIndex in 0..3) {
+                if (game.canMoveWasteToFoundation(foundationIndex)) {
+                    val sourceView = wastePile.getChildAt(0)
+                    val targetView = foundations[foundationIndex]
 
-        while (movesMade && !game.isGameWon()) {
-            movesMade = false
+                    performAnimatedMove(
+                        moveAction = { game.moveWasteToFoundation(foundationIndex) },
+                        sourceView = sourceView,
+                        targetView = targetView
+                    )
 
-            // Try to move from waste to foundation
-            if (game.getGameState().waste.isNotEmpty()) {
-                for (foundationIndex in 0..3) {
-                    if (game.moveWasteToFoundation(foundationIndex)) {
-                        movesMade = true
-                        break
-                    }
+                    // Continue auto-complete after this animation
+                    handler.postDelayed({
+                        if (!game.isGameWon()) performNextAutoMove()
+                    }, 400)
+                    return
                 }
-            }
-
-            // Try to move from tableau to foundation
-            if (!movesMade) {
-                for (tableauIndex in 0..6) {
-                    for (foundationIndex in 0..3) {
-                        if (game.moveTableauToFoundation(tableauIndex, foundationIndex)) {
-                            movesMade = true
-                            break
-                        }
-                    }
-                    if (movesMade) break
-                }
-            }
-
-            // Update UI after each batch of moves
-            if (movesMade) {
-                updateUI()
-                // Small delay to show the animation effect
-                Thread.sleep(100)
             }
         }
 
-        // Final UI update
+        // Try to move from tableau to foundation with animation
+        for (tableauIndex in 0..6) {
+            for (foundationIndex in 0..3) {
+                if (game.canMoveTableauToFoundation(tableauIndex, foundationIndex)) {
+                    val sourceColumn = tableauColumns[tableauIndex]
+                    val sourceView = if (sourceColumn.childCount > 0)
+                        sourceColumn.getChildAt(sourceColumn.childCount - 1) else null
+                    val targetView = foundations[foundationIndex]
+
+                    if (sourceView != null) {
+                        performAnimatedMove(
+                            moveAction = { game.moveTableauToFoundation(tableauIndex, foundationIndex) },
+                            sourceView = sourceView,
+                            targetView = targetView
+                        )
+
+                        // Continue auto-complete after this animation
+                        handler.postDelayed({
+                            if (!game.isGameWon()) performNextAutoMove()
+                        }, 400)
+                        return
+                    }
+                }
+            }
+        }
+
+        // No more moves available
         updateUI()
         checkWinCondition()
     }
 
+    // Add handler for delayed operations
+    private val handler = android.os.Handler(android.os.Looper.getMainLooper())
+    private fun performAutoComplete() {
+        if (isAnimating) return
+
+        performNextAutoMove()
+    }
     private fun updateUI() {
         val gameState = game.getGameState()
 

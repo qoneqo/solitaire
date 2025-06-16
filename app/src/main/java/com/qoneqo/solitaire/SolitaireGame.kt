@@ -227,6 +227,61 @@ class SolitaireGame {
         )
     }
 
+    // Add these methods to SolitaireGame class:
+
+    // Check if move is possible without actually performing it
+    fun canMoveWasteToFoundation(foundationIndex: Int): Boolean {
+        if (waste.isEmpty() || foundationIndex !in 0..3) return false
+
+        val card = waste.last()
+        val foundation = foundations[foundationIndex]
+        val topCard = foundation.lastOrNull()
+
+        return card.canPlaceInFoundation(topCard)
+    }
+
+    fun canMoveTableauToFoundation(tableauIndex: Int, foundationIndex: Int): Boolean {
+        if (tableauIndex !in 0..6 || foundationIndex !in 0..3) return false
+
+        val pile = tableau[tableauIndex]
+        if (pile.isEmpty()) return false
+
+        val card = pile.last()
+        val foundation = foundations[foundationIndex]
+        val topCard = foundation.lastOrNull()
+
+        return card.canPlaceInFoundation(topCard)
+    }
+
+    fun canMoveWasteToTableau(tableauIndex: Int): Boolean {
+        if (waste.isEmpty() || tableauIndex !in 0..6) return false
+
+        val card = waste.last()
+        val targetPile = tableau[tableauIndex]
+
+        return if (targetPile.isEmpty()) {
+            card.rank == Card.Rank.KING
+        } else {
+            card.canPlaceOn(targetPile.last())
+        }
+    }
+
+    fun canMoveFoundationToTableau(foundationIndex: Int, tableauIndex: Int): Boolean {
+        if (foundationIndex !in 0..3 || tableauIndex !in 0..6) return false
+
+        val foundation = foundations[foundationIndex]
+        if (foundation.isEmpty()) return false
+
+        val card = foundation.last()
+        val targetPile = tableau[tableauIndex]
+
+        return if (targetPile.isEmpty()) {
+            card.rank == Card.Rank.KING
+        } else {
+            card.canPlaceOn(targetPile.last())
+        }
+    }
+
     // Reset game
     fun newGame() {
         deck.clear()
