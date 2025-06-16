@@ -1,6 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
+    <style name="FabShapeAppearance" parent="ShapeAppearance.MaterialComponents.SmallComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
+    </style>
+
+    <style name="FabStyle" parent="Widget.MaterialComponents.FloatingActionButton">
+        <item name="backgroundTint">@color/black</item>
+        <item name="tint">@android:color/white</item>
+        <item name="elevation">8dp</item>
+        <item name="hoveredFocusedTranslationZ">12dp</item>
+        <item name="pressedTranslationZ">8dp</item>
+        <item name="shapeAppearance">@style/FabShapeAppearance</item>
+    </style>
+
     <style name="Theme.SolitaireGame" parent="Theme.Material3.Dark.NoActionBar">
         <!-- Primary brand color. -->
         <item name="colorPrimary">@color/purple_500</item>
@@ -13,5 +27,6 @@
         <!-- Status bar color. -->
         <item name="android:statusBarColor">@color/black</item>
         <!-- Customize your theme here. -->
+        <item name="floatingActionButtonStyle">@style/FabStyle</item>
     </style>
 </resources>

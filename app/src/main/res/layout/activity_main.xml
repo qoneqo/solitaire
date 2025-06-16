@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -53,17 +54,15 @@
                 android:textSize="16sp"
                 android:textStyle="bold" />
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/newGameButton"
                 android:layout_width="wrap_content"
                 android:layout_height="42dp"
-                android:background="@drawable/new_game_button_background"
-                android:elevation="2dp"
-                android:fontFamily="@font/comic_neue_bold"
-                android:stateListAnimator="@null"
+                app:backgroundTint="#FF000000"
+                app:cornerRadius="20dp"
                 android:text="🎮 New"
                 android:textColor="#FFFCFC"
-                android:textSize="14sp" />
+                android:textSize="14sp"/>
 
         </LinearLayout>
 
@@ -223,6 +222,21 @@
         </ScrollView>
 
     </LinearLayout>
+
+    <!-- Floating Sound Toggle Button -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabSoundToggle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        android:contentDescription="Toggle sound"
+        android:src="@drawable/ic_volume_on"
+        app:backgroundTint="@color/black"
+        app:elevation="6dp"
+        app:maxImageSize="32dp"
+        app:tint="#FFFFFF" />
 
     <!-- Floating Auto Complete Button -->
     <Button

@@ -1,13 +1,17 @@
 package com.qoneqo.solitaire
 
+import android.content.Context
 import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
 import android.view.Gravity
+import android.view.HapticFeedbackConstants
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 
 class MainActivity : AppCompatActivity() {
 
@@ -20,6 +24,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tableauColumns: Array<LinearLayout>
     private lateinit var autoCompleteButton: Button
     private lateinit var soundManager: SoundManager
+    private var isSoundEnabled = true
 
     // animation state
     private var isAnimating = false
@@ -100,6 +105,7 @@ class MainActivity : AppCompatActivity() {
         initializeViews()
         game = SolitaireGame()
         setupClickListeners()
+        setupSoundToggleButton()
         updateUI()
         soundManager.playSound(R.raw.card_deal)
     }
@@ -390,6 +396,62 @@ class MainActivity : AppCompatActivity() {
         showLoseMessage()
     }
 
+    private fun setupSoundToggleButton() {
+        val fabSoundToggle = findViewById<FloatingActionButton>(R.id.fabSoundToggle)
+
+        // Load saved preference (optional)
+        val sharedPref = getPreferences(Context.MODE_PRIVATE)
+        isSoundEnabled = sharedPref.getBoolean("sound_enabled", true)
+        soundManager.setSoundEnabled(isSoundEnabled)
+
+        // Set initial icon
+        fabSoundToggle.setImageResource(
+            if (isSoundEnabled) R.drawable.ic_volume_on
+            else R.drawable.ic_volume_off
+        )
+
+        fabSoundToggle.setOnClickListener {
+            isSoundEnabled = !isSoundEnabled
+
+            // Update icon
+            fabSoundToggle.setImageResource(
+                if (isSoundEnabled) R.drawable.ic_volume_on
+                else R.drawable.ic_volume_off
+            )
+
+            // Save preference (optional)
+            with(sharedPref.edit()) {
+                putBoolean("sound_enabled", isSoundEnabled)
+                apply()
+            }
+
+            // Provide feedback
+            soundManager.setSoundEnabled(isSoundEnabled)
+            if (isSoundEnabled) {
+                soundManager.playSound(R.raw.card_place)
+            }
+
+            // Haptic feedback
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                fabSoundToggle.performHapticFeedback(HapticFeedbackConstants.TOGGLE_OFF)
+            } else {
+                fabSoundToggle.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+            }
+
+            // Small bounce animation
+            fabSoundToggle.animate()
+                .scaleX(0.8f)
+                .scaleY(0.8f)
+                .setDuration(100)
+                .withEndAction {
+                    fabSoundToggle.animate()
+                        .scaleX(1f)
+                        .scaleY(1f)
+                        .setDuration(100)
+                        .start()
+                }.start()
+        }
+    }
     // Add this function to show the lose message
     private fun showLoseMessage() {
         soundManager.playSound(R.raw.lose_sound)
