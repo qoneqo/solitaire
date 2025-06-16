@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#9FBAECDE"
+        android:orientation="vertical"
+        android:padding="8dp">
+
+        <!-- Top bar with score and controls -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:background="@drawable/top_bar_background"
+            android:elevation="8dp"
+            android:orientation="horizontal"
+            android:padding="8dp">
+
+            <TextView
+                android:id="@+id/scoreText"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:drawableStart="@drawable/ic_star"
+                android:drawablePadding="6dp"
+                android:ellipsize="none"
+                android:fontFamily="@font/comic_neue_bold"
+                android:gravity="center|start"
+                android:singleLine="true"
+                android:text="Score: 0"
+                android:textColor="#2E7D32"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/movesText"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:drawableStart="@drawable/ic_move"
+                android:drawablePadding="6dp"
+                android:ellipsize="none"
+                android:fontFamily="@font/comic_neue_bold"
+                android:gravity="center|start"
+                android:singleLine="true"
+                android:text="Moves: 0"
+                android:textColor="#1976D2"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/newGameButton"
+                android:layout_width="wrap_content"
+                android:layout_height="42dp"
+                android:background="@drawable/new_game_button_background"
+                android:elevation="2dp"
+                android:fontFamily="@font/comic_neue_bold"
+                android:stateListAnimator="@null"
+                android:text="🎮 New"
+                android:textColor="#ffffff"
+                android:textSize="14sp" />
+
+        </LinearLayout>
+
+        <!-- Top row: Stock, Waste, and Foundations -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:orientation="horizontal">
+
+            <!-- Stock (deck) -->
+
+            <!-- Waste -->
+            <FrameLayout
+                android:id="@+id/stockPile"
+                android:layout_width="0dp"
+                android:layout_height="80dp"
+                android:layout_margin="4dp"
+                android:layout_weight="1"
+                android:background="@drawable/card_back"
+                android:clickable="true" />
+
+            <FrameLayout
+                android:id="@+id/wastePile"
+                android:layout_width="0dp"
+                android:layout_height="80dp"
+                android:layout_margin="2dp"
+                android:layout_weight="1"
+                android:background="#88ffffff" />
+
+            <!-- Spacer -->
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="0.5" />
+
+            <!-- Foundations -->
+            <FrameLayout
+                android:id="@+id/foundation0"
+                android:layout_width="0dp"
+                android:layout_height="80dp"
+                android:layout_margin="2dp"
+                android:layout_weight="1"
+                android:background="#88ffffff" />
+
+            <FrameLayout
+                android:id="@+id/foundation1"
+                android:layout_width="0dp"
+                android:layout_height="80dp"
+                android:layout_margin="2dp"
+                android:layout_weight="1"
+                android:background="#88ffffff" />
+
+            <FrameLayout
+                android:id="@+id/foundation2"
+                android:layout_width="0dp"
+                android:layout_height="80dp"
+                android:layout_margin="2dp"
+                android:layout_weight="1"
+                android:background="#88ffffff" />
+
+            <FrameLayout
+                android:id="@+id/foundation3"
+                android:layout_width="0dp"
+                android:layout_height="80dp"
+                android:layout_margin="2dp"
+                android:layout_weight="1"
+                android:background="#88ffffff" />
+
+        </LinearLayout>
+
+        <!-- Tableau (7 columns) -->
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:fillViewport="true">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:weightSum="7">
+
+                <LinearLayout
+                    android:id="@+id/tableau0"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_margin="1dp"
+                    android:layout_weight="1"
+                    android:background="#44ffffff"
+                    android:minHeight="420dp"
+                    android:orientation="vertical" />
+
+                <LinearLayout
+                    android:id="@+id/tableau1"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_margin="1dp"
+                    android:layout_weight="1"
+                    android:background="#44ffffff"
+                    android:minHeight="420dp"
+                    android:orientation="vertical" />
+
+                <LinearLayout
+                    android:id="@+id/tableau2"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_margin="1dp"
+                    android:layout_weight="1"
+                    android:background="#44ffffff"
+                    android:minHeight="420dp"
+                    android:orientation="vertical" />
+
+                <LinearLayout
+                    android:id="@+id/tableau3"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_margin="1dp"
+                    android:layout_weight="1"
+                    android:background="#44ffffff"
+                    android:minHeight="420dp"
+                    android:orientation="vertical" />
+
+                <LinearLayout
+                    android:id="@+id/tableau4"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_margin="1dp"
+                    android:layout_weight="1"
+                    android:background="#44ffffff"
+                    android:minHeight="420dp"
+                    android:orientation="vertical" />
+
+                <LinearLayout
+                    android:id="@+id/tableau5"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_margin="1dp"
+                    android:layout_weight="1"
+                    android:background="#44ffffff"
+                    android:minHeight="420dp"
+                    android:orientation="vertical" />
+
+                <LinearLayout
+                    android:id="@+id/tableau6"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_margin="1dp"
+                    android:layout_weight="1"
+                    android:background="#44ffffff"
+                    android:minHeight="420dp"
+                    android:orientation="vertical" />
+
+            </LinearLayout>
+
+        </ScrollView>
+
+    </LinearLayout>
+
+    <!-- Floating Auto Complete Button -->
+    <Button
+        android:id="@+id/autoCompleteButton"
+        android:layout_width="wrap_content"
+        android:layout_height="56dp"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="16dp"
+        android:background="@drawable/floating_auto_button_background"
+        android:elevation="8dp"
+        android:fontFamily="@font/comic_neue_bold"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:stateListAnimator="@null"
+        android:text="✨ Auto Complete"
+        android:textColor="#ffffff"
+        android:textSize="16sp"
+        android:visibility="gone" />
+
+</FrameLayout>
