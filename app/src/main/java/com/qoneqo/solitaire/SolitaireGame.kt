@@ -264,6 +264,25 @@ class SolitaireGame {
 
         return card.canPlaceInFoundation(topCard)
     }
+    fun canMoveTableauToTableau(fromIndex: Int, toIndex: Int): Boolean {
+        if (fromIndex !in 0..6 || toIndex !in 0..6 || fromIndex == toIndex) return false
+
+        val fromPile = tableau[fromIndex]
+        if (fromPile.isEmpty()) return false
+
+        // Find the first face-up card (bottom of movable sequence)
+        val firstFaceUpIndex = fromPile.indexOfFirst { it.isFaceUp }
+        if (firstFaceUpIndex == -1) return false // No face-up cards
+
+        val movingCard = fromPile[firstFaceUpIndex]
+        val toPile = tableau[toIndex]
+
+        return if (toPile.isEmpty()) {
+            movingCard.rank == Card.Rank.KING
+        } else {
+            movingCard.canPlaceOn(toPile.last())
+        }
+    }
 
     fun canMoveWasteToTableau(tableauIndex: Int): Boolean {
         if (waste.isEmpty() || tableauIndex !in 0..6) return false

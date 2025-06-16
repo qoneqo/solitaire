@@ -1,6 +1,8 @@
 package com.qoneqo.solitaire
 
+import android.graphics.Color
 import android.os.Bundle
+import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
@@ -17,6 +19,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var foundations: Array<FrameLayout>
     private lateinit var tableauColumns: Array<LinearLayout>
     private lateinit var autoCompleteButton: Button
+    private lateinit var soundManager: SoundManager
 
     // animation state
     private var isAnimating = false
@@ -71,6 +74,7 @@ class MainActivity : AppCompatActivity() {
                 // After animation completes
                 updateUI()
                 checkWinCondition()
+                checkLoseCondition()
                 isAnimating = false
 
                 // Process next animation in queue
@@ -84,6 +88,7 @@ class MainActivity : AppCompatActivity() {
             if (moveAction()) {
                 updateUI()
                 checkWinCondition()
+                checkLoseCondition()
             }
         }
     }
@@ -91,12 +96,17 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        soundManager = SoundManager(this)
         initializeViews()
         game = SolitaireGame()
         setupClickListeners()
         updateUI()
+        soundManager.playSound(R.raw.card_deal)
     }
-
+    override fun onDestroy() {
+        soundManager.release()
+        super.onDestroy()
+    }
     private fun initializeViews() {
         scoreText = findViewById(R.id.scoreText)
         movesText = findViewById(R.id.movesText)
@@ -136,6 +146,7 @@ class MainActivity : AppCompatActivity() {
         // Stock pile click - draw card
         stockPile.setOnClickListener {
             if (game.drawCard()) {
+                soundManager.playSound(R.raw.card_flip)
                 clearSelection()
                 updateUI()
             }
@@ -158,7 +169,7 @@ class MainActivity : AppCompatActivity() {
                         if (game.canMoveWasteToFoundation(i)) {
                             val sourceView = wastePile.getChildAt(0)
                             val targetView = foundations[i]
-
+                            soundManager.playSound(R.raw.card_place)
                             performAnimatedMove(
                                 moveAction = { game.moveWasteToFoundation(i) },
                                 sourceView = sourceView,
@@ -182,6 +193,7 @@ class MainActivity : AppCompatActivity() {
 
                 if (selectedFromWaste) {
                     val sourceView = wastePile.getChildAt(0)
+                    soundManager.playSound(R.raw.card_place)
                     performAnimatedMove(
                         moveAction = { game.moveWasteToFoundation(index) },
                         sourceView = sourceView,
@@ -194,6 +206,7 @@ class MainActivity : AppCompatActivity() {
                         sourceColumn.getChildAt(sourceColumn.childCount - 1) else null
 
                     if (sourceView != null) {
+                        soundManager.playSound(R.raw.card_place)
                         performAnimatedMove(
                             moveAction = { game.moveTableauToFoundation(selectedTableauColumn, index) },
                             sourceView = sourceView,
@@ -239,12 +252,14 @@ class MainActivity : AppCompatActivity() {
         if (selectedFromWaste) {
             // Move waste to tableau
             if (game.moveWasteToTableau(columnIndex)) {
+                soundManager.playSound(R.raw.card_place)
                 clearSelection()
                 updateUI()
             }
         } else if (selectedFoundationIndex != -1) {
             // NEW: Move foundation to tableau
             if (game.moveFoundationToTableau(selectedFoundationIndex, columnIndex)) {
+                soundManager.playSound(R.raw.card_place)
                 clearSelection()
                 updateUI()
             }
@@ -259,6 +274,7 @@ class MainActivity : AppCompatActivity() {
                 if (selectedPile.isNotEmpty() && selectedCardIndex != -1) {
                     val cardsToMove = selectedPile.size - selectedCardIndex
                     if (game.moveTableauToTableau(selectedTableauColumn, columnIndex, cardsToMove)) {
+                        soundManager.playSound(R.raw.card_place)
                         clearSelection()
                         updateUI()
                     }
@@ -271,6 +287,7 @@ class MainActivity : AppCompatActivity() {
                 // Try auto-move to foundation first
                 for (foundationIndex in 0..3) {
                     if (game.moveTableauToFoundation(columnIndex, foundationIndex)) {
+                        soundManager.playSound(R.raw.card_place)
                         clearSelection()
                         updateUI()
                         checkWinCondition()
@@ -320,6 +337,77 @@ class MainActivity : AppCompatActivity() {
         selectedFromWaste = false
         selectedFoundationIndex = -1 // NEW: Clear foundation selection
     }
+    private fun checkLoseCondition() {
+        if (game.isGameWon()) return // Don't show lose if already won
+
+        val gameState = game.getGameState()
+
+        // Check if stock has cards
+        if (gameState.deck.isNotEmpty()) return
+
+        // Check if any waste-to-tableau moves are possible
+        for (i in 0..6) {
+            if (game.canMoveWasteToTableau(i)) {
+                soundManager.playSound(R.raw.card_place)
+                return
+            }
+        }
+
+        // Check if any waste-to-foundation moves are possible
+        for (i in 0..3) {
+            if (game.canMoveWasteToFoundation(i)) return
+        }
+
+        // Check tableau moves
+        for (fromCol in 0..6) {
+            val pile = gameState.tableau[fromCol]
+            if (pile.isEmpty()) continue
+
+            // Check tableau-to-foundation moves
+            for (foundationIndex in 0..3) {
+                if (game.canMoveTableauToFoundation(fromCol, foundationIndex)) return
+            }
+
+            // Check tableau-to-tableau moves
+            for (toCol in 0..6) {
+                if (fromCol == toCol) continue
+                if (game.canMoveTableauToTableau(fromCol, toCol)) {
+                    soundManager.playSound(R.raw.card_place)
+                    return
+                }
+            }
+        }
+
+        // Check foundation-to-tableau moves
+        for (foundationIndex in 0..3) {
+            if (gameState.foundations[foundationIndex].isEmpty()) continue
+            for (tableauIndex in 0..6) {
+                if (game.canMoveFoundationToTableau(foundationIndex, tableauIndex)) return
+            }
+        }
+
+        // If we get here, no moves are possible
+        showLoseMessage()
+    }
+
+    // Add this function to show the lose message
+    private fun showLoseMessage() {
+        soundManager.playSound(R.raw.lose_sound)
+        val toast = Toast.makeText(
+            this,
+            "Game Over! No more moves available",
+            Toast.LENGTH_LONG
+        ).apply {
+            setGravity(Gravity.CENTER, 0, 0)
+            view?.setBackgroundColor(Color.parseColor("#BB000000"))
+            view?.findViewById<TextView>(android.R.id.message)?.apply {
+                setTextColor(Color.WHITE)
+                textSize = 18f
+                setPadding(40, 40, 40, 40)
+            }
+        }
+        toast.show()
+    }
 
     private fun checkAutoCompleteAvailability(): Boolean {
         val gameState = game.getGameState()
@@ -341,6 +429,7 @@ class MainActivity : AppCompatActivity() {
                     val sourceView = wastePile.getChildAt(0)
                     val targetView = foundations[foundationIndex]
 
+                    soundManager.playSound(R.raw.card_place)
                     performAnimatedMove(
                         moveAction = { game.moveWasteToFoundation(foundationIndex) },
                         sourceView = sourceView,
@@ -366,6 +455,7 @@ class MainActivity : AppCompatActivity() {
                     val targetView = foundations[foundationIndex]
 
                     if (sourceView != null) {
+                        soundManager.playSound(R.raw.card_place)
                         performAnimatedMove(
                             moveAction = { game.moveTableauToFoundation(tableauIndex, foundationIndex) },
                             sourceView = sourceView,
@@ -502,12 +592,14 @@ class MainActivity : AppCompatActivity() {
         if (selectedFromWaste) {
             // Move waste to tableau
             if (game.moveWasteToTableau(columnIndex)) {
+                soundManager.playSound(R.raw.card_place)
                 clearSelection()
                 updateUI()
             }
         } else if (selectedFoundationIndex != -1) {
             // NEW: Move foundation to tableau
             if (game.moveFoundationToTableau(selectedFoundationIndex, columnIndex)) {
+                soundManager.playSound(R.raw.card_place)
                 clearSelection()
                 updateUI()
             }
@@ -520,6 +612,7 @@ class MainActivity : AppCompatActivity() {
                     // Clicking on the top card - try auto-move to foundation
                     for (foundationIndex in 0..3) {
                         if (game.moveTableauToFoundation(columnIndex, foundationIndex)) {
+                            soundManager.playSound(R.raw.card_place)
                             clearSelection()
                             updateUI()
                             checkWinCondition()
@@ -537,6 +630,7 @@ class MainActivity : AppCompatActivity() {
                 if (selectedPile.isNotEmpty() && selectedCardIndex != -1) {
                     val cardsToMove = selectedPile.size - selectedCardIndex
                     if (game.moveTableauToTableau(selectedTableauColumn, columnIndex, cardsToMove)) {
+                        soundManager.playSound(R.raw.card_place)
                         clearSelection()
                         updateUI()
                     }
@@ -547,6 +641,7 @@ class MainActivity : AppCompatActivity() {
             if (cardIndex == pile.size - 1) {
                 for (foundationIndex in 0..3) {
                     if (game.moveTableauToFoundation(columnIndex, foundationIndex)) {
+                        soundManager.playSound(R.raw.card_place)
                         clearSelection()
                         updateUI()
                         checkWinCondition()
@@ -610,6 +705,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun checkWinCondition() {
         if (game.isGameWon()) {
+            soundManager.playSound(R.raw.win_sound)
             Toast.makeText(this, "Congratulations! You won!", Toast.LENGTH_LONG).show()
         }
     }
