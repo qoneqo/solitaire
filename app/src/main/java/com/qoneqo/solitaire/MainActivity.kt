@@ -52,6 +52,14 @@ class MainActivity : AppCompatActivity() {
         if (sourceView != null && targetView != null) {
             isAnimating = true
 
+            // Execute the actual move FIRST before animation
+            val moveSuccess = moveAction()
+
+            if (!moveSuccess) {
+                isAnimating = false
+                return
+            }
+
             // Create a temporary card view for animation
             val cardView = if (sourceView is ImageView) sourceView else createCardViewFromSource(sourceView)
 
@@ -60,8 +68,7 @@ class MainActivity : AppCompatActivity() {
                 targetContainer = targetView as ViewGroup,
                 cardView = cardView as ImageView
             ) {
-                // Execute the actual move after animation
-                moveAction()
+                // After animation completes
                 updateUI()
                 checkWinCondition()
                 isAnimating = false

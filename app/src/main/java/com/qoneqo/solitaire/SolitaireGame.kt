@@ -3,6 +3,15 @@ package com.qoneqo.solitaire
 import kotlin.random.Random
 
 class SolitaireGame {
+
+    companion object {
+        private const val MOVE_PENALTY = 1  // Points deducted per move
+        private const val WASTE_TO_TABLEAU_BONUS = 5
+        private const val TO_FOUNDATION_BONUS = 10
+        private const val TABLEAU_FLIP_BONUS = 5
+        private const val INITIAL_SCORE = 1000  // Starting score
+    }
+
     // Game state
     private val deck = mutableListOf<Card>()
     private val waste = mutableListOf<Card>()
@@ -10,7 +19,7 @@ class SolitaireGame {
     private val tableau = Array(7) { mutableListOf<Card>() }
 
     // Game stats
-    var score = 0
+    var score = INITIAL_SCORE
         private set
     var moves = 0
         private set
@@ -37,7 +46,10 @@ class SolitaireGame {
     private fun shuffleDeck() {
         deck.shuffle(Random.Default)
     }
-
+    private fun applyMovePenalty() {
+        moves++
+        score = maxOf(0, score - MOVE_PENALTY)
+    }
     private fun dealCards() {
         // Deal cards to tableau
         var cardIndex = 0
@@ -63,7 +75,7 @@ class SolitaireGame {
             val card = deck.removeAt(deck.size - 1)
             card.isFaceUp = true
             waste.add(card)
-            moves++
+            applyMovePenalty()
             true
         } else if (waste.isNotEmpty()) {
             // Reset deck from waste
@@ -72,7 +84,7 @@ class SolitaireGame {
                 card.isFaceUp = false
                 deck.add(card)
             }
-            moves++
+            applyMovePenalty()
             true
         } else {
             false
@@ -95,8 +107,8 @@ class SolitaireGame {
         if (canMove) {
             waste.removeAt(waste.size - 1)
             targetPile.add(card)
-            moves++
-            score += 5
+            applyMovePenalty()
+            score += WASTE_TO_TABLEAU_BONUS
             return true
         }
         return false
@@ -113,8 +125,8 @@ class SolitaireGame {
         if (card.canPlaceInFoundation(topCard)) {
             waste.removeAt(waste.size - 1)
             foundation.add(card)
-            moves++
-            score += 10
+            applyMovePenalty()
+            score += TO_FOUNDATION_BONUS
             return true
         }
         return false
@@ -173,11 +185,11 @@ class SolitaireGame {
             // Flip the next card if needed
             if (pile.isNotEmpty() && !pile.last().isFaceUp) {
                 pile.last().isFaceUp = true
-                score += 5
+                score += TABLEAU_FLIP_BONUS
             }
 
-            moves++
-            score += 10
+            applyMovePenalty()
+            score += TO_FOUNDATION_BONUS
             return true
         }
         return false
@@ -288,7 +300,7 @@ class SolitaireGame {
         waste.clear()
         foundations.forEach { it.clear() }
         tableau.forEach { it.clear() }
-        score = 0
+        score = INITIAL_SCORE
         moves = 0
         initializeGame()
     }
