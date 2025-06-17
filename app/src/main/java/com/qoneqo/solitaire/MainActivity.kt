@@ -344,56 +344,160 @@ class MainActivity : AppCompatActivity() {
         selectedFoundationIndex = -1 // NEW: Clear foundation selection
     }
     private fun checkLoseCondition() {
-        if (game.isGameWon()) return // Don't show lose if already won
+        if (game.isGameWon()) return // Don't check if already won
 
         val gameState = game.getGameState()
 
-        // Check if stock has cards
-        if (gameState.deck.isNotEmpty()) return
+        // 1. Check if any card can be moved to foundations
+        if (canAnyCardMoveToFoundation(gameState)) return
 
-        // Check if any waste-to-tableau moves are possible
-        for (i in 0..6) {
-            if (game.canMoveWasteToTableau(i)) {
-                soundManager.playSound(R.raw.card_place)
-                return
-            }
-        }
+        // 2. Check if any tableau card can be moved to another tableau column
+        if (canAnyTableauCardMove(gameState)) return
 
-        // Check if any waste-to-foundation moves are possible
-        for (i in 0..3) {
-            if (game.canMoveWasteToFoundation(i)) return
-        }
+        // 3. Check if any waste card can be moved (if waste isn't empty)
+        if (gameState.waste.isNotEmpty() && canWasteCardMove(gameState)) return
 
-        // Check tableau moves
-        for (fromCol in 0..6) {
-            val pile = gameState.tableau[fromCol]
-            if (pile.isEmpty()) continue
+        // 4. Check if any foundation card can be moved back to tableau
+        if (canAnyFoundationCardMoveToTableau(gameState)) return
 
-            // Check tableau-to-foundation moves
-            for (foundationIndex in 0..3) {
-                if (game.canMoveTableauToFoundation(fromCol, foundationIndex)) return
-            }
-
-            // Check tableau-to-tableau moves
-            for (toCol in 0..6) {
-                if (fromCol == toCol) continue
-                if (game.canMoveTableauToTableau(fromCol, toCol)) {
-                    soundManager.playSound(R.raw.card_place)
-                    return
-                }
-            }
-        }
-
-        // Check foundation-to-tableau moves
-        for (foundationIndex in 0..3) {
-            if (gameState.foundations[foundationIndex].isEmpty()) continue
-            for (tableauIndex in 0..6) {
-                if (game.canMoveFoundationToTableau(foundationIndex, tableauIndex)) return
-            }
+        // 5. Check if drawing new cards could help (only if stock isn't empty)
+        if (gameState.deck.isNotEmpty()) {
+            // Simulate drawing a card to see if it would enable any moves
+            val simulatedWasteCard = gameState.deck.last()
+            if (wouldCardEnableMoves(simulatedWasteCard, gameState)) return
         }
 
         // If we get here, no moves are possible
         showLoseMessage()
+    }
+
+// Helper functions for the lose condition check:
+
+    private fun canAnyCardMoveToFoundation(gameState: GameState): Boolean {
+        // Check waste card
+        if (gameState.waste.isNotEmpty()) {
+            val wasteCard = gameState.waste.last()
+            for (i in 0..3) {
+                val foundation = gameState.foundations[i]
+                val topFoundationCard = foundation.lastOrNull()
+                if (wasteCard.canPlaceInFoundation(topFoundationCard)) {
+                    return true
+                }
+            }
+        }
+
+        // Check tableau cards
+        for (col in 0..6) {
+            val pile = gameState.tableau[col]
+            if (pile.isEmpty()) continue
+
+            val topTableauCard = pile.last()
+            if (!topTableauCard.isFaceUp) continue
+
+            for (i in 0..3) {
+                val foundation = gameState.foundations[i]
+                val topFoundationCard = foundation.lastOrNull()
+                if (topTableauCard.canPlaceInFoundation(topFoundationCard)) {
+                    return true
+                }
+            }
+        }
+
+        return false
+    }
+
+    private fun canAnyTableauCardMove(gameState: GameState): Boolean {
+        for (fromCol in 0..6) {
+            val fromPile = gameState.tableau[fromCol]
+            if (fromPile.isEmpty()) continue
+
+            // Find the first face-up card (bottom of movable sequence)
+            val firstFaceUpIndex = fromPile.indexOfFirst { it.isFaceUp }
+            if (firstFaceUpIndex == -1) continue // No face-up cards in this column
+
+            val movingCard = fromPile[firstFaceUpIndex]
+
+            for (toCol in 0..6) {
+                if (fromCol == toCol) continue
+
+                val toPile = gameState.tableau[toCol]
+                if (toPile.isEmpty()) {
+                    if (movingCard.rank == Card.Rank.KING) return true
+                } else {
+                    if (movingCard.canPlaceOn(toPile.last())) return true
+                }
+            }
+        }
+        return false
+    }
+
+    private fun canWasteCardMove(gameState: GameState): Boolean {
+        if (gameState.waste.isEmpty()) return false
+
+        val wasteCard = gameState.waste.last()
+
+        // Check waste to foundation
+        for (i in 0..3) {
+            val foundation = gameState.foundations[i]
+            val topFoundationCard = foundation.lastOrNull()
+            if (wasteCard.canPlaceInFoundation(topFoundationCard)) {
+                return true
+            }
+        }
+
+        // Check waste to tableau
+        for (col in 0..6) {
+            val pile = gameState.tableau[col]
+            if (pile.isEmpty()) {
+                if (wasteCard.rank == Card.Rank.KING) return true
+            } else {
+                if (wasteCard.canPlaceOn(pile.last())) return true
+            }
+        }
+
+        return false
+    }
+
+    private fun canAnyFoundationCardMoveToTableau(gameState: GameState): Boolean {
+        for (foundationIndex in 0..3) {
+            val foundation = gameState.foundations[foundationIndex]
+            if (foundation.isEmpty()) continue
+
+            val foundationCard = foundation.last()
+
+            for (tableauIndex in 0..6) {
+                val tableauPile = gameState.tableau[tableauIndex]
+                if (tableauPile.isEmpty()) {
+                    if (foundationCard.rank == Card.Rank.KING) return true
+                } else {
+                    if (foundationCard.canPlaceOn(tableauPile.last())) return true
+                }
+            }
+        }
+        return false
+    }
+
+    private fun wouldCardEnableMoves(card: Card, gameState: GameState): Boolean {
+        // Check if this card could be placed on any foundation
+        for (i in 0..3) {
+            val foundation = gameState.foundations[i]
+            val topFoundationCard = foundation.lastOrNull()
+            if (card.canPlaceInFoundation(topFoundationCard)) {
+                return true
+            }
+        }
+
+        // Check if this card could be placed on any tableau
+        for (col in 0..6) {
+            val pile = gameState.tableau[col]
+            if (pile.isEmpty()) {
+                if (card.rank == Card.Rank.KING) return true
+            } else {
+                if (card.canPlaceOn(pile.last())) return true
+            }
+        }
+
+        return false
     }
 
     private fun setupSoundToggleButton() {
