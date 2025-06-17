@@ -152,7 +152,7 @@ class MainActivity : AppCompatActivity() {
         // Stock pile click - draw card
         stockPile.setOnClickListener {
             if (game.drawCard()) {
-                soundManager.playSound(R.raw.card_flip)
+                soundManager.playSound(R.raw.card_place)
                 clearSelection()
                 updateUI()
             }
