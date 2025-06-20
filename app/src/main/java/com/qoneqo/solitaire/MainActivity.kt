@@ -9,6 +9,7 @@ import android.view.HapticFeedbackConstants
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -35,6 +36,11 @@ class MainActivity : AppCompatActivity() {
     private var selectedCardIndex: Int = -1
     private var selectedFromWaste: Boolean = false
     private var selectedFoundationIndex: Int = -1 // NEW: Track selected foundation
+
+    //    analyzer
+    private lateinit var gameAnalyzer: GameStateAnalyzer
+    private var lastAnalysisTime = 0L
+    private val ANALYSIS_COOLDOWN = 5000L // 5 seconds between analyses
 
     private fun createCardViewFromSource(sourceView: View): ImageView {
         val imageView = ImageView(this)
@@ -106,6 +112,7 @@ class MainActivity : AppCompatActivity() {
         setupSoundToggleButton()
         updateUI()
         soundManager.playSound(R.raw.card_deal)
+        gameAnalyzer = GameStateAnalyzer()
     }
     override fun onDestroy() {
         soundManager.release()
@@ -696,7 +703,153 @@ class MainActivity : AppCompatActivity() {
     private fun checkWinCondition() {
         if (game.isGameWon()) {
             soundManager.playSound(R.raw.win_sound)
-            Toast.makeText(this, "Congratulations! You won!", Toast.LENGTH_LONG).show()
+            showGameOverDialog(true)
+        } else if (gameAnalyzer.isGameLost(game.getGameState())) {
+            // Only show loss if there are truly no moves left
+            soundManager.playSound(R.raw.lose_sound)
+            showGameOverDialog(false)
         }
     }
+    private fun showGameOverDialog(isWin: Boolean) {
+        val message = if (isWin) "Congratulations! You won!"
+        else "Game Over - No more possible moves detected"
+
+        AlertDialog.Builder(this)
+            .setTitle(if (isWin) "You Won!" else "Game Over")
+            .setMessage(message)
+            .setPositiveButton("New Game") { _, _ ->
+                game.newGame()
+                clearSelection()
+                updateUI()
+                soundManager.playSound(R.raw.card_deal)
+            }
+            .setNegativeButton("Continue") { dialog, _ ->
+                dialog.dismiss() // Let the player keep trying
+            }
+            .setCancelable(false)
+            .show()
+    }
+    // Add this method to show the unwinnable dialog
+    private fun showUnwinnableDialog() {
+        val dialog = androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("Game Analysis")
+            .setMessage("This game appears to be unwinnable based on current card positions. Would you like to start a new game?")
+            .setPositiveButton("New Game") { _, _ ->
+                game.newGame()
+                clearSelection()
+                updateUI()
+                soundManager.playSound(R.raw.card_deal)
+            }
+            .setNegativeButton("Continue Playing") { _, _ ->
+                // Player chooses to continue
+            }
+            .setNeutralButton("Auto-Hint") { _, _ ->
+                // Show a hint for the best available move
+                showBestMoveHint()
+            }
+            .setCancelable(true)
+            .create()
+
+        dialog.show()
+    }
+
+    // Add this method to show move hints
+    private fun showBestMoveHint() {
+        val gameState = game.getGameState()
+        val hint = findBestMoveHint(gameState)
+
+        if (hint.isNotEmpty()) {
+            Toast.makeText(this, hint, Toast.LENGTH_LONG).show()
+        } else {
+            Toast.makeText(this, "No obvious moves available. Try drawing cards or moving cards between columns.", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    // Add this helper method to find move hints
+    private fun findBestMoveHint(gameState: GameState): String {
+        // Check for foundation moves first (highest priority)
+        if (gameState.waste.isNotEmpty()) {
+            for (i in 0..3) {
+                if (gameState.waste.last().canPlaceInFoundation(gameState.foundations[i].lastOrNull())) {
+                    return "Move ${gameState.waste.last().rank.displayName} of ${gameState.waste.last().suit.symbol} from waste to foundation"
+                }
+            }
+        }
+
+        // Check tableau to foundation
+        for (i in 0..6) {
+            if (gameState.tableau[i].isNotEmpty()) {
+                val topCard = gameState.tableau[i].last()
+                for (j in 0..3) {
+                    if (topCard.canPlaceInFoundation(gameState.foundations[j].lastOrNull())) {
+                        return "Move ${topCard.rank.displayName} of ${topCard.suit.symbol} from column ${i + 1} to foundation"
+                    }
+                }
+            }
+        }
+
+        // Check for tableau moves that reveal face-down cards
+        for (i in 0..6) {
+            val pile = gameState.tableau[i]
+            if (pile.size >= 2 && !pile[pile.size - 2].isFaceUp) {
+                val topCard = pile.last()
+                for (j in 0..6) {
+                    if (i != j) {
+                        val targetPile = gameState.tableau[j]
+                        if (targetPile.isEmpty() && topCard.rank == Card.Rank.KING) {
+                            return "Move King from column ${i + 1} to empty column ${j + 1} to reveal hidden card"
+                        } else if (targetPile.isNotEmpty() && topCard.canPlaceOn(targetPile.last())) {
+                            return "Move ${topCard.rank.displayName} of ${topCard.suit.symbol} from column ${i + 1} to column ${j + 1} to reveal hidden card"
+                        }
+                    }
+                }
+            }
+        }
+
+        // Check waste to tableau moves
+        if (gameState.waste.isNotEmpty()) {
+            val wasteCard = gameState.waste.last()
+            for (i in 0..6) {
+                val pile = gameState.tableau[i]
+                if (pile.isEmpty() && wasteCard.rank == Card.Rank.KING) {
+                    return "Move King from waste to empty column ${i + 1}"
+                } else if (pile.isNotEmpty() && wasteCard.canPlaceOn(pile.last())) {
+                    return "Move ${wasteCard.rank.displayName} of ${wasteCard.suit.symbol} from waste to column ${i + 1}"
+                }
+            }
+        }
+
+        // Suggest drawing cards if deck available
+        if (gameState.deck.isNotEmpty()) {
+            return "Draw cards from the deck to see more options"
+        }
+
+        return ""
+    }
+
+    // Add this method to check game progress
+    private fun hasGameProgressedRecently(): Boolean {
+        val gameState = game.getGameState()
+        val foundationTotal = gameState.foundations.sumOf { it.size }
+
+        // Store previous foundation total and compare
+        val sharedPref = getPreferences(Context.MODE_PRIVATE)
+        val previousFoundationTotal = sharedPref.getInt("prev_foundation_total", 0)
+        val previousMoves = sharedPref.getInt("prev_moves", 0)
+
+        // If 10+ moves passed without foundation progress, trigger analysis
+        val noProgress = (gameState.moves - previousMoves >= 10) &&
+                (foundationTotal == previousFoundationTotal)
+
+        // Update stored values
+        with(sharedPref.edit()) {
+            putInt("prev_foundation_total", foundationTotal)
+            putInt("prev_moves", gameState.moves)
+            apply()
+        }
+
+        return !noProgress
+    }
+
+
 }
