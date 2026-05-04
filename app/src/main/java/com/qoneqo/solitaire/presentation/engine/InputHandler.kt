@@ -78,6 +78,8 @@ class InputHandler(
                     sourcePileIndex = i
                     
                     activeCardStack?.forEachIndexed { index, c ->
+                        c.originalX = c.renderX
+                        c.originalY = c.renderY
                         c.touchOffsetX = x - c.renderX
                         c.touchOffsetY = y - c.renderY
                     }
@@ -93,6 +95,8 @@ class InputHandler(
                 activeCardStack = listOf(card)
                 sourcePileType = 0
                 sourcePileIndex = -1
+                card.originalX = card.renderX
+                card.originalY = card.renderY
                 card.touchOffsetX = x - card.renderX
                 card.touchOffsetY = y - card.renderY
                 return true
