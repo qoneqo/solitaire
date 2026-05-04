@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.RectF
 import android.view.MotionEvent
 import android.view.SurfaceHolder
 import android.view.SurfaceView
@@ -118,8 +119,8 @@ class GameSurfaceView @JvmOverloads constructor(
         val spacingX = (w - (2 * marginX) - (7 * am.cardWidth)) / 6f
 
         // Top row: stock, waste, gap, 4 foundations
-        // Adjusted stockY down a bit so it's not hidden by the top bar overlay
-        stockY = marginY + (h * 0.08f) 
+        // Adjusted stockY down to avoid overlap with new header and stats row tiles
+        stockY = marginY + (h * 0.18f) 
         stockX = marginX
         wasteY = stockY
         wasteX = stockX + am.cardWidth + spacingX
@@ -254,15 +255,30 @@ class GameSurfaceView @JvmOverloads constructor(
 
     fun render(canvas: Canvas) {
         val am = assetManager ?: return
-        canvas.drawColor(Color.parseColor("#1B5E20")) // Green felt background
+        canvas.drawColor(Color.parseColor("#9fb5b0"))
 
-        // Draw empty slots
+        // Draw empty slots and tableau borders
+        val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.parseColor("#4D000000") // Subtle dark border
+            style = Paint.Style.STROKE
+            strokeWidth = 2f
+        }
+
         canvas.drawBitmap(am.emptySlotBitmap, stockX, stockY, renderPaint)
         canvas.drawBitmap(am.emptySlotBitmap, wasteX, wasteY, renderPaint)
         for (i in 0 until 4) {
             canvas.drawBitmap(am.emptySlotBitmap, foundationX[i], foundationY, renderPaint)
         }
         for (i in 0 until 7) {
+            // Draw a subtle border for the tableau column area
+            val tableauRect = RectF(
+                tableauX[i] - 4f, 
+                tableauY - 4f, 
+                tableauX[i] + am.cardWidth + 4f, 
+                height.toFloat() - 40f
+            )
+            canvas.drawRoundRect(tableauRect, 16f, 16f, borderPaint)
+            
             canvas.drawBitmap(am.emptySlotBitmap, tableauX[i], tableauY, renderPaint)
         }
 

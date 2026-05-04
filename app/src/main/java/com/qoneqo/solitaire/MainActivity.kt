@@ -34,13 +34,14 @@ class MainActivity : AppCompatActivity(), GameEventListener {
         timerText = findViewById(R.id.timerText)
 
         gameSurfaceView.gameEventListener = this
-
-        findViewById<Button>(R.id.newGameButton).setOnClickListener {
+        
+        // Use generic View or actual FloatingActionButton class to avoid ClassCastException
+        findViewById<android.view.View>(R.id.newGameButton).setOnClickListener {
             viewModel.resetGame()
             gameSurfaceView.setupNewGame()
         }
 
-        findViewById<Button>(R.id.undoButton).setOnClickListener {
+        findViewById<android.view.View>(R.id.undoButton).setOnClickListener {
             synchronized(gameSurfaceView.gameStateLock) {
                 if (gameSurfaceView.gameState.undoStack.isNotEmpty()) {
                     val previousStateJson = gameSurfaceView.gameState.undoStack.removeLast()

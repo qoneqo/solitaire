@@ -104,11 +104,18 @@ class CardAssetManager(private val context: Context, screenWidth: Int, screenHei
         emptySlotBitmap = Bitmap.createBitmap(cardWidth.toInt(), cardHeight.toInt(), Bitmap.Config.ARGB_8888)
         val canvas = Canvas(emptySlotBitmap)
         val paint = Paint(Paint.ANTI_ALIAS_FLAG)
-        paint.color = Color.argb(100, 0, 0, 0)
+        
+        // Fill background with #c2d0cd
+        paint.color = Color.parseColor("#c2d0cd")
+        paint.style = Paint.Style.FILL
+        val rectF = RectF(0f, 0f, cardWidth, cardHeight)
+        canvas.drawRoundRect(rectF, 16f, 16f, paint)
+        
+        // Draw border
+        paint.color = Color.argb(60, 0, 0, 0)
         paint.style = Paint.Style.STROKE
-        paint.strokeWidth = 4f
-        val rectF = RectF(2f, 2f, cardWidth - 2f, cardHeight - 2f)
-        canvas.drawRoundRect(rectF, 12f, 12f, paint)
+        paint.strokeWidth = 3f
+        canvas.drawRoundRect(rectF, 16f, 16f, paint)
     }
 
     fun getCardBitmap(card: Card): Bitmap {
