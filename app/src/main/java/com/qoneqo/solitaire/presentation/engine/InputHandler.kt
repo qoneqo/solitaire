@@ -14,6 +14,11 @@ class InputHandler(
     var activeCardStack: List<Card>? = null
     private var sourcePileType = -1 // 0: Waste, 1: Foundation, 2: Tableau
     private var sourcePileIndex = -1
+    
+    // Double Tap
+    private var lastTapTime: Long = 0
+    private var lastTapCard: Card? = null
+    private val DOUBLE_TAP_TIMEOUT = 300L
 
     fun onTouchEvent(event: MotionEvent, gameState: GameState, layout: GameLayout): Boolean {
         val x = event.x
@@ -73,6 +78,17 @@ class InputHandler(
                 if (card.isFaceUp && x >= layout.tableauX[i] && x <= layout.tableauX[i] + am.cardWidth &&
                     y >= cardY && y <= cardBottomY) {
                     
+                    // Double Tap Check
+                    val currentTime = System.currentTimeMillis()
+                    if (currentTime - lastTapTime < DOUBLE_TAP_TIMEOUT && lastTapCard == card && j == tableau.lastIndex) {
+                        if (tryAutoMoveToFoundation(card, 2, i, gameState, layout)) {
+                            lastTapTime = 0
+                            return true
+                        }
+                    }
+                    lastTapTime = currentTime
+                    lastTapCard = card
+
                     activeCardStack = tableau.subList(j, tableau.size).toList()
                     sourcePileType = 2
                     sourcePileIndex = i
@@ -92,6 +108,17 @@ class InputHandler(
         if (gameState.waste.isNotEmpty()) {
             val card = gameState.waste.last()
             if (x >= layout.wasteX && x <= layout.wasteX + am.cardWidth && y >= layout.wasteY && y <= layout.wasteY + am.cardHeight) {
+                // Double Tap Check
+                val currentTime = System.currentTimeMillis()
+                if (currentTime - lastTapTime < DOUBLE_TAP_TIMEOUT && lastTapCard == card) {
+                    if (tryAutoMoveToFoundation(card, 0, -1, gameState, layout)) {
+                        lastTapTime = 0
+                        return true
+                    }
+                }
+                lastTapTime = currentTime
+                lastTapCard = card
+
                 activeCardStack = listOf(card)
                 sourcePileType = 0
                 sourcePileIndex = -1
@@ -145,6 +172,16 @@ class InputHandler(
 
         activeCardStack = null
         return true
+    }
+
+    private fun tryAutoMoveToFoundation(card: Card, fromType: Int, fromIdx: Int, gameState: GameState, layout: GameLayout): Boolean {
+        for (i in 0 until 4) {
+            if (SolitaireRules.canMoveToFoundation(card, gameState.foundations[i])) {
+                executeMove(listOf(card), fromType, fromIdx, 1, i, gameState, layout)
+                return true
+            }
+        }
+        return false
     }
 
     private fun executeMove(
