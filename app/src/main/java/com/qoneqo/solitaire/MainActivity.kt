@@ -41,23 +41,7 @@ class MainActivity : AppCompatActivity(), GameEventListener {
         }
 
         findViewById<android.view.View>(R.id.undoButton).setOnClickListener {
-            synchronized(gameSurfaceView.gameStateLock) {
-                if (gameSurfaceView.gameState.undoStack.isNotEmpty()) {
-                    val previousStateJson = gameSurfaceView.gameState.undoStack.removeLast()
-                    try {
-                        val previousState = Json.decodeFromString<GameState>(previousStateJson)
-                        // Preserve the undo stack since it's transient/not copied properly or we want to keep it
-                        val currentUndoStack = gameSurfaceView.gameState.undoStack
-                        previousState.undoStack = currentUndoStack
-                        
-                        gameSurfaceView.loadGameState(previousState)
-                        viewModel.updateScore(previousState.score)
-                        viewModel.updateMoves(previousState.moves)
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                }
-            }
+            gameSurfaceView.undo()
         }
 
         // Observe ViewModel states
