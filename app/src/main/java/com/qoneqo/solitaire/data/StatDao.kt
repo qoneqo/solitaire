@@ -11,4 +11,7 @@ interface StatDao {
 
     @Query("SELECT MAX(score) FROM game_stats")
     suspend fun getBestScore(): Int?
+
+    @Query("SELECT * FROM game_stats WHERE isWin = 1 ORDER BY score DESC LIMIT 10")
+    suspend fun getTopScores(): List<StatEntity>
 }

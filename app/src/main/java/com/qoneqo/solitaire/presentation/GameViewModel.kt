@@ -79,4 +79,10 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             statDao.getBestScore()
         }
     }
+
+    suspend fun loadTopScores(): List<StatEntity> {
+        return withContext(Dispatchers.IO) {
+            statDao.getTopScores()
+        }
+    }
 }

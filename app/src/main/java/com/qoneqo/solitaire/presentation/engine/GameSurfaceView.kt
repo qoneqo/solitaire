@@ -37,10 +37,12 @@ class GameSurfaceView @JvmOverloads constructor(
     private var logbookStepIndex: Int = 0
     private var isGameFinished: Boolean = false
 
-    // Loop Detection
+    // Loop Detection & Hint
     private val moveHistory = LinkedList<LogbookMove>()
     private var recycleCount: Int = 0
     private var movesSinceLastProgress: Int = 0
+    private var hintedCard: Card? = null
+    private var hintTimer: Float = 0f
 
     fun getCurrentLogbookId(): Int = currentLogbookEntry?.id ?: -1
 
@@ -75,22 +77,14 @@ class GameSurfaceView @JvmOverloads constructor(
                 android.util.Log.i("GameSurfaceView", "New Game started using Logbook ID: ${entry.id}")
             } else {
                 android.util.Log.e("GameSurfaceView", "CRITICAL ERROR: Logbook is empty! Cannot start game.")
-                // Optionally show a message to user here
             }
             
             moveHistory.clear()
             recycleCount = 0
             movesSinceLastProgress = 0
             isGameFinished = false
-            isAutoSolving = false // Stop bot on new game
-            updateCardPositions()
-        }
-    }
-
-    fun loadGameState(state: GameState) {
-        synchronized(gameStateLock) {
-            gameState = state
-            isUsingLogbook = false // Manual load breaks logbook
+            isAutoSolving = false
+            hintedCard = null
             updateCardPositions()
         }
     }
@@ -100,10 +94,28 @@ class GameSurfaceView @JvmOverloads constructor(
             if (gameState.undoStack.isNotEmpty()) {
                 val command = gameState.undoStack.removeAt(gameState.undoStack.size - 1)
                 command.undo(gameState)
-                isUsingLogbook = false // Undo breaks logbook
+                isUsingLogbook = false
                 updateCardPositions()
                 gameEventListener?.onScoreChanged(gameState.score)
                 gameEventListener?.onMovesChanged(gameState.moves)
+            }
+        }
+    }
+
+    fun showHint() {
+        runOnGameThread {
+            val move = InternalSolver.getNextMove(gameState)
+            if (move != null) {
+                hintedCard = when (move.type) {
+                    "DEAL_STOCK" -> if (gameState.stock.isNotEmpty()) gameState.stock.last() else null
+                    "RECYCLE_WASTE" -> if (gameState.waste.isNotEmpty()) gameState.waste.first() else null
+                    "TO_FOUNDATION", "TO_TABLEAU" -> {
+                        val fromPile = if (move.fromType == 0) gameState.waste else gameState.tableaus[move.fromIdx]
+                        if (fromPile.size >= move.cardCount) fromPile[fromPile.size - move.cardCount] else null
+                    }
+                    else -> null
+                }
+                hintTimer = 3.0f
             }
         }
     }
@@ -211,6 +223,11 @@ class GameSurfaceView @JvmOverloads constructor(
             val am = assetManager ?: return
             physics.update(dt, gameState, l, am)
             
+            if (hintTimer > 0) {
+                hintTimer -= dt
+                if (hintTimer <= 0) hintedCard = null
+            }
+
             if (isAutoSolving) {
                 solverTimer += dt
                 if (solverTimer >= 0.3f) {
@@ -230,23 +247,17 @@ class GameSurfaceView @JvmOverloads constructor(
             val entry = currentLogbookEntry
             if (entry != null && logbookStepIndex < entry.moves.size) {
                 nextMove = entry.moves[logbookStepIndex]
-                android.util.Log.d("GameBot", "Executing logbook step $logbookStepIndex: ${nextMove.type}")
                 logbookStepIndex++
             } else {
-                android.util.Log.d("GameBot", "Logbook finished or unavailable. Switching to dynamic.")
                 isUsingLogbook = false
             }
         }
         
         if (nextMove == null) {
             nextMove = InternalSolver.getNextMove(gameState)
-            if (nextMove != null) {
-                android.util.Log.d("GameBot", "Executing dynamic step: ${nextMove.type}")
-            }
         }
-
+        
         if (nextMove == null) {
-            android.util.Log.d("GameBot", "No moves found. Stopping.")
             isAutoSolving = false
             return
         }
@@ -254,48 +265,27 @@ class GameSurfaceView @JvmOverloads constructor(
         if (validateAndExecuteMove(nextMove)) {
             detectLoop(nextMove)
         } else {
-            android.util.Log.w("GameBot", "Move ${nextMove.type} was invalid according to rules!")
-            // If logbook move failed, we must switch to dynamic
             if (isUsingLogbook) {
                 isUsingLogbook = false
-                performSolverMove() // Try again with dynamic solver immediately
+                performSolverMove()
             }
         }
     }
 
     private fun validateAndExecuteMove(move: LogbookMove): Boolean {
-
         when (move.type) {
-            "DEAL_STOCK" -> {
-                if (gameState.stock.isNotEmpty()) {
-                    executeMove(move)
-                    return true
-                }
-            }
-            "RECYCLE_WASTE" -> {
-                if (gameState.waste.isNotEmpty() && gameState.stock.isEmpty()) {
-                    executeMove(move)
-                    return true
-                }
-            }
+            "DEAL_STOCK" -> if (gameState.stock.isNotEmpty()) { executeMove(move); return true }
+            "RECYCLE_WASTE" -> if (gameState.waste.isNotEmpty() && gameState.stock.isEmpty()) { executeMove(move); return true }
             "TO_FOUNDATION" -> {
                 val fromPile = if (move.fromType == 0) gameState.waste else gameState.tableaus[move.fromIdx]
-                if (fromPile.isNotEmpty()) {
-                    val card = fromPile.last()
-                    if (SolitaireRules.canMoveToFoundation(card, gameState.foundations[move.toIdx])) {
-                        executeMove(move)
-                        return true
-                    }
+                if (fromPile.isNotEmpty() && SolitaireRules.canMoveToFoundation(fromPile.last(), gameState.foundations[move.toIdx])) {
+                    executeMove(move); return true
                 }
             }
             "TO_TABLEAU" -> {
                 val fromPile = if (move.fromType == 0) gameState.waste else gameState.tableaus[move.fromIdx]
-                if (fromPile.size >= move.cardCount) {
-                    val card = fromPile[fromPile.size - move.cardCount]
-                    if (SolitaireRules.canMoveToTableau(card, gameState.tableaus[move.toIdx])) {
-                        executeMove(move)
-                        return true
-                    }
+                if (fromPile.size >= move.cardCount && SolitaireRules.canMoveToTableau(fromPile[fromPile.size - move.cardCount], gameState.tableaus[move.toIdx])) {
+                    executeMove(move); return true
                 }
             }
         }
@@ -308,15 +298,13 @@ class GameSurfaceView @JvmOverloads constructor(
 
         when (move.type) {
             "DEAL_STOCK" -> {
-                if (gameState.stock.isNotEmpty()) {
-                    val card = gameState.stock.removeAt(gameState.stock.size - 1)
-                    card.isFaceUp = true
-                    gameState.waste.add(card)
-                    gameState.undoStack.add(GameCommand.DealStock(1))
-                    gameState.moves++
-                    gameEventListener?.playSound(com.qoneqo.solitaire.R.raw.card_deal)
-                    gameEventListener?.onMovesChanged(gameState.moves)
-                }
+                val card = gameState.stock.removeAt(gameState.stock.size - 1)
+                card.isFaceUp = true
+                gameState.waste.add(card)
+                gameState.undoStack.add(GameCommand.DealStock(1))
+                gameState.moves++
+                gameEventListener?.playSound(com.qoneqo.solitaire.R.raw.card_deal)
+                gameEventListener?.onMovesChanged(gameState.moves)
             }
             "RECYCLE_WASTE" -> {
                 val count = gameState.waste.size
@@ -331,15 +319,12 @@ class GameSurfaceView @JvmOverloads constructor(
             }
             "TO_FOUNDATION" -> {
                 val fromPile = if (move.fromType == 0) gameState.waste else gameState.tableaus[move.fromIdx]
-                if (fromPile.isEmpty()) return
                 val card = fromPile.removeAt(fromPile.size - 1)
                 if (move.fromType == 2 && fromPile.isNotEmpty() && !fromPile.last().isFaceUp) fromPile.last().isFaceUp = true
-                
                 gameState.foundations[move.toIdx].add(card)
                 card.originalX = l.foundationX[move.toIdx]
                 card.originalY = l.foundationY
                 card.isSnappingBack = true
-                
                 gameState.undoStack.add(GameCommand.MoveCards(listOf(0), move.fromType, move.fromIdx, 1, move.toIdx, false))
                 gameState.score += GameConfig.SCORE_FOUNDATION
                 gameState.moves++
@@ -349,13 +334,10 @@ class GameSurfaceView @JvmOverloads constructor(
             }
             "TO_TABLEAU" -> {
                 val fromPile = if (move.fromType == 0) gameState.waste else gameState.tableaus[move.fromIdx]
-                if (fromPile.size < move.cardCount) return
                 val stack = fromPile.subList(fromPile.size - move.cardCount, fromPile.size).toList()
                 val wasFaceDown = move.fromType == 2 && fromPile.size > stack.size && !fromPile[fromPile.size - stack.size - 1].isFaceUp
-                
                 repeat(stack.size) { fromPile.removeAt(fromPile.size - 1) }
                 if (move.fromType == 2 && fromPile.isNotEmpty() && !fromPile.last().isFaceUp) fromPile.last().isFaceUp = true
-                
                 val toPile = gameState.tableaus[move.toIdx]
                 toPile.addAll(stack)
                 stack.forEachIndexed { index, c ->
@@ -363,7 +345,6 @@ class GameSurfaceView @JvmOverloads constructor(
                     c.originalY = l.tableauY + (toPile.size - stack.size + index) * am.verticalOffset
                     c.isSnappingBack = true
                 }
-                
                 gameState.undoStack.add(GameCommand.MoveCards(List(stack.size) { it }, move.fromType, move.fromIdx, 2, move.toIdx, wasFaceDown))
                 gameState.moves++
                 gameEventListener?.playSound(com.qoneqo.solitaire.R.raw.card_place)
@@ -374,38 +355,18 @@ class GameSurfaceView @JvmOverloads constructor(
     }
 
     private fun detectLoop(move: LogbookMove) {
-        if (isUsingLogbook) return // Logbook path is pre-verified
-
-        // Pattern A: Ping-Pong (Back and forth)
+        if (isUsingLogbook) return
         moveHistory.add(move)
         if (moveHistory.size > 6) moveHistory.removeFirst()
-        
         if (moveHistory.size >= 4) {
-            val m1 = moveHistory[moveHistory.size - 4]
-            val m2 = moveHistory[moveHistory.size - 3]
-            val m3 = moveHistory[moveHistory.size - 2]
-            val m4 = moveHistory[moveHistory.size - 1]
-            
-            // Check if m1 == m3 and m2 == m4 AND m1 is reverse of m2
-            if (m1 == m3 && m2 == m4) {
-                // Simple reverse detection: same piles, opposite direction
-                if (m1.type == "TO_TABLEAU" && m2.type == "TO_TABLEAU" &&
-                    m1.fromIdx == m2.toIdx && m1.toIdx == m2.fromIdx) {
-                    stuck("Bot Terjebak! Win tidak bisa dipastikan 100% Silakan gerakkan kartu manual atau mulai game baru.")
-                }
+            val m1 = moveHistory[moveHistory.size - 4]; val m2 = moveHistory[moveHistory.size - 3]
+            val m3 = moveHistory[moveHistory.size - 2]; val m4 = moveHistory[moveHistory.size - 1]
+            if (m1 == m3 && m2 == m4 && m1.type == "TO_TABLEAU" && m2.type == "TO_TABLEAU" && m1.fromIdx == m2.toIdx && m1.toIdx == m2.fromIdx) {
+                stuck("Bot Terjebak! Silakan gerakkan kartu manual atau mulai game baru.")
             }
         }
-
-        // Pattern B: Stock Loop
-        if (move.type == "RECYCLE_WASTE") {
-            recycleCount++
-            if (recycleCount >= 3) {
-                stuck("Bot Terjebak! Win tidak bisa dipastikan 100% Silakan gerakkan kartu manual atau mulai game baru.")
-            }
-        } else if (move.type != "DEAL_STOCK") {
-            // Any move other than dealing reset the recycle count
-            recycleCount = 0
-        }
+        if (move.type == "RECYCLE_WASTE") { recycleCount++; if (recycleCount >= 3) stuck("Bot Terjebak! Silakan gerakkan kartu manual atau mulai game baru.") }
+        else if (move.type != "DEAL_STOCK") recycleCount = 0
     }
 
     private fun stuck(message: String) {
@@ -416,7 +377,7 @@ class GameSurfaceView @JvmOverloads constructor(
     fun render(canvas: Canvas) {
         val l = layout ?: return
         val am = assetManager ?: return
-        renderer.render(canvas, gameState, l, inputHandler.activeCardStack)
+        renderer.render(canvas, gameState, l, inputHandler.activeCardStack, hintedCard)
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
@@ -424,7 +385,7 @@ class GameSurfaceView @JvmOverloads constructor(
             val l = layout ?: return false
             val handled = inputHandler.onTouchEvent(event, gameState, l)
             if (event.action == MotionEvent.ACTION_UP) {
-                if (handled) isUsingLogbook = false // Manual move breaks logbook
+                if (handled) { isUsingLogbook = false; hintedCard = null }
                 updateCardPositions()
             }
             return handled
@@ -435,7 +396,6 @@ class GameSurfaceView @JvmOverloads constructor(
         if (!isGameFinished && gameState.foundations.all { it.size == 13 }) {
             isGameFinished = true
             isAutoSolving = false
-            android.util.Log.d("GameBot", "Game Won! Stopping Bot.")
             gameEventListener?.onGameWon()
         }
     }

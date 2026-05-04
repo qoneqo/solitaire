@@ -17,12 +17,20 @@ class WorldRenderer(private val am: CardAssetManager) {
         style = Paint.Style.STROKE
         strokeWidth = 2f
     }
+    
+    private val highlightPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.YELLOW
+        style = Paint.Style.STROKE
+        strokeWidth = 6f
+        alpha = 150
+    }
 
     fun render(
         canvas: Canvas, 
         gameState: GameState, 
         layout: GameLayout, 
-        activeCardStack: List<Card>?
+        activeCardStack: List<Card>?,
+        hintedCard: Card? = null
     ) {
         canvas.drawColor(Color.parseColor(GameConfig.BACKGROUND_COLOR))
 
@@ -47,10 +55,10 @@ class WorldRenderer(private val am: CardAssetManager) {
         }
 
         // 2. Draw card stacks (except active cards)
-        drawStack(canvas, gameState.stock, activeCardStack)
-        drawStack(canvas, gameState.waste, activeCardStack)
-        gameState.foundations.forEach { drawStack(canvas, it, activeCardStack) }
-        gameState.tableaus.forEach { drawStack(canvas, it, activeCardStack) }
+        drawStack(canvas, gameState.stock, activeCardStack, hintedCard)
+        drawStack(canvas, gameState.waste, activeCardStack, hintedCard)
+        gameState.foundations.forEach { drawStack(canvas, it, activeCardStack, hintedCard) }
+        gameState.tableaus.forEach { drawStack(canvas, it, activeCardStack, hintedCard) }
 
         // 3. Draw active cards on top
         activeCardStack?.forEach { card ->
@@ -58,10 +66,15 @@ class WorldRenderer(private val am: CardAssetManager) {
         }
     }
 
-    private fun drawStack(canvas: Canvas, stack: List<Card>, activeCardStack: List<Card>?) {
+    private fun drawStack(canvas: Canvas, stack: List<Card>, activeCardStack: List<Card>?, hintedCard: Card?) {
         for (card in stack) {
             if (activeCardStack?.contains(card) != true) {
                 canvas.drawBitmap(am.getCardBitmap(card), card.renderX, card.renderY, renderPaint)
+                
+                if (card == hintedCard) {
+                    val rect = RectF(card.renderX, card.renderY, card.renderX + am.cardWidth, card.renderY + am.cardHeight)
+                    canvas.drawRoundRect(rect, 10f, 10f, highlightPaint)
+                }
             }
         }
     }

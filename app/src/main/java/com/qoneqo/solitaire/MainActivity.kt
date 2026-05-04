@@ -54,6 +54,11 @@ class MainActivity : AppCompatActivity(), GameEventListener {
             gameSurfaceView.undo()
         }
 
+        findViewById<android.view.View>(R.id.hintButton).setOnClickListener {
+            playSound(R.raw.card_place)
+            gameSurfaceView.showHint()
+        }
+
         // Observe ViewModel states
         lifecycleScope.launch {
             viewModel.score.collect {
@@ -147,11 +152,18 @@ class MainActivity : AppCompatActivity(), GameEventListener {
                     }
                     3 -> { // High Score
                         lifecycleScope.launch {
-                            val best = viewModel.loadHighScore()
+                            val topScores = viewModel.loadTopScores()
                             runOnUiThread {
+                                val message = if (topScores.isEmpty()) {
+                                    "No scores yet!"
+                                } else {
+                                    topScores.joinToString("\n") { 
+                                        "Score: ${it.score} | Moves: ${it.moves} | Time: ${it.timeElapsedSeconds}s"
+                                    }
+                                }
                                 AlertDialog.Builder(this@MainActivity)
-                                    .setTitle("High Score")
-                                    .setMessage("Your best score is: ${best ?: 0}")
+                                    .setTitle("Top 10 High Scores")
+                                    .setMessage(message)
                                     .setPositiveButton("OK", null)
                                     .show()
                             }
