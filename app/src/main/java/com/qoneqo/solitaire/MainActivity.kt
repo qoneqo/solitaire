@@ -45,10 +45,12 @@ class MainActivity : AppCompatActivity(), GameEventListener {
 
         // Settings Button replaced New Game Button
         findViewById<android.view.View>(R.id.settingsButton).setOnClickListener {
+            playSound(R.raw.card_place)
             showSettingsMenu()
         }
 
         findViewById<android.view.View>(R.id.undoButton).setOnClickListener {
+            playSound(R.raw.card_place)
             gameSurfaceView.undo()
         }
 
@@ -71,26 +73,15 @@ class MainActivity : AppCompatActivity(), GameEventListener {
 
         viewModel.startTimer()
         
-        // Try to load game
-        lifecycleScope.launch {
-            val savedState = viewModel.loadGame()
-            if (savedState != null) {
-                gameSurfaceView.loadGameState(savedState)
-                viewModel.updateScore(savedState.score)
-                viewModel.updateMoves(savedState.moves)
-            }
-        }
+        viewModel.startTimer()
+        
+        // Forced New Game from Logbook on every start to ensure winnability
+        gameSurfaceView.setupNewGame()
     }
 
     override fun onPause() {
         super.onPause()
-        synchronized(gameSurfaceView.gameStateLock) {
-            val stateToSave = gameSurfaceView.gameState
-            // Update state with current score and moves before saving
-            stateToSave.score = viewModel.score.value
-            stateToSave.moves = viewModel.moves.value
-            viewModel.saveGame(stateToSave)
-        }
+        // We no longer save random states to avoid overwriting winnable games
     }
 
     override fun onScoreChanged(score: Int) {
@@ -105,13 +96,23 @@ class MainActivity : AppCompatActivity(), GameEventListener {
         }
     }
 
+    override fun onBotStuck(message: String) {
+        runOnUiThread {
+            AlertDialog.Builder(this)
+                .setTitle("Bot Terjebak!")
+                .setMessage(message)
+                .setPositiveButton("OK", null)
+                .show()
+        }
+    }
+
     override fun onGameWon() {
         runOnUiThread {
             viewModel.onGameWon()
             soundManager.playSound(R.raw.win_sound)
             AlertDialog.Builder(this)
                 .setTitle("You Won!")
-                .setMessage("Congratulations! You won the game in ${viewModel.timeSeconds.value} seconds with ${viewModel.moves.value} moves.")
+                .setMessage("Congratulations! You won the game in ${viewModel.timeSeconds.value} seconds with ${viewModel.moves.value} moves. (Logbook ID: ${gameSurfaceView.getCurrentLogbookId()})")
                 .setPositiveButton("New Game") { _, _ ->
                     viewModel.resetGame()
                     gameSurfaceView.setupNewGame()
@@ -124,6 +125,7 @@ class MainActivity : AppCompatActivity(), GameEventListener {
     private fun showSettingsMenu() {
         val options = arrayOf(
             "New Game",
+            "Auto Solve",
             if (soundManager.isSoundEnabled()) "Disable Sound" else "Enable Sound",
             "Check High Score",
             "Exit"
@@ -137,10 +139,13 @@ class MainActivity : AppCompatActivity(), GameEventListener {
                         viewModel.resetGame()
                         gameSurfaceView.setupNewGame()
                     }
-                    1 -> { // Toggle Sound
+                    1 -> { // Auto Solve
+                        gameSurfaceView.isAutoSolving = !gameSurfaceView.isAutoSolving
+                    }
+                    2 -> { // Toggle Sound
                         soundManager.setSoundEnabled(!soundManager.isSoundEnabled())
                     }
-                    2 -> { // High Score
+                    3 -> { // High Score
                         lifecycleScope.launch {
                             val best = viewModel.loadHighScore()
                             runOnUiThread {
@@ -152,7 +157,7 @@ class MainActivity : AppCompatActivity(), GameEventListener {
                             }
                         }
                     }
-                    3 -> { // Exit
+                    4 -> { // Exit
                         finish()
                     }
                 }

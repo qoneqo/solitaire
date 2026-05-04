@@ -1,0 +1,62 @@
+[
+  {
+    "id": 1,
+    "deck": [
+      "s1", "h1", "d1", "c1", "s2", "h2", "d2", "c2", "s3", "h3", "d3", "c3", "s4", "h4", "d4", "c4", "s5", "h5", "d5", "c5", "s6", "h6", "d6", "c6", "s7", "h7", "d7", "c7",
+      "s8", "s9", "s10", "s11", "s12", "s13", "h8", "h9", "h10", "h11", "h12", "h13", "d8", "d9", "d10", "d11", "d12", "d13", "c8", "c9", "c10", "c11", "c12", "c13"
+    ],
+    "moves": [
+      {"type": "TO_FOUNDATION", "fromType": 2, "fromIdx": 0, "toIdx": 0},
+      {"type": "TO_FOUNDATION", "fromType": 2, "fromIdx": 1, "toIdx": 1},
+      {"type": "TO_FOUNDATION", "fromType": 2, "fromIdx": 2, "toIdx": 2},
+      {"type": "TO_FOUNDATION", "fromType": 2, "fromIdx": 3, "toIdx": 3}
+    ]
+  },
+  {
+    "id": 2,
+    "deck": [
+      "c13", "d13", "h13", "s13", "c12", "d12", "h12", "s12", "c11", "d11", "h11", "s11", "c10", "d10", "h10", "s10", "c9", "d9", "h9", "s9", "c8", "d8", "h8", "s8", "c7", "d7", "h7", "s7",
+      "s1", "s2", "s3", "s4", "s5", "s6", "h1", "h2", "h3", "h4", "h5", "h6", "d1", "d2", "d3", "d4", "d5", "d6", "c1", "c2", "c3", "c4", "c5", "c6"
+    ],
+    "moves": [
+      {"type": "DEAL_STOCK"},
+      {"type": "DEAL_STOCK"},
+      {"type": "DEAL_STOCK"},
+      {"type": "TO_FOUNDATION", "fromType": 0, "toIdx": 0}
+    ]
+  },
+  {
+    "id": 3,
+    "deck": [
+      "h5", "s5", "d5", "c5", "h6", "s6", "d6", "c6", "h7", "s7", "d7", "c7", "h8", "s8", "d8", "c8", "h9", "s9", "d9", "c9", "h10", "s10", "d10", "c10", "h11", "s11", "d11", "c11",
+      "h1", "s1", "d1", "c1", "h2", "s2", "d2", "c2", "h3", "s3", "d3", "c3", "h4", "s4", "d4", "c4", "h12", "s12", "d12", "c12", "h13", "s13", "d13", "c13"
+    ],
+    "moves": [
+      {"type": "DEAL_STOCK"},
+      {"type": "TO_FOUNDATION", "fromType": 0, "toIdx": 2}
+    ]
+  },
+  {
+    "id": 4,
+    "deck": [
+      "d7", "c7", "h7", "s7", "d8", "c8", "h8", "s8", "d9", "c9", "h9", "s9", "d10", "c10", "h10", "s10", "d11", "c11", "h11", "s11", "d12", "c12", "h12", "s12", "d13", "c13", "h13", "s13",
+      "d1", "d2", "d3", "d4", "d5", "d6", "c1", "c2", "c3", "c4", "c5", "c6", "h1", "h2", "h3", "h4", "h5", "h6", "s1", "s2", "s3", "s4", "s5", "s6"
+    ],
+    "moves": [
+      {"type": "DEAL_STOCK"},
+      {"type": "DEAL_STOCK"},
+      {"type": "TO_FOUNDATION", "fromType": 0, "toIdx": 1}
+    ]
+  },
+  {
+    "id": 5,
+    "deck": [
+      "s10", "h10", "d10", "c10", "s9", "h9", "d9", "c9", "s8", "h8", "d8", "c8", "s7", "h7", "d7", "c7", "s6", "h6", "d6", "c6", "s5", "h5", "d5", "c5", "s4", "h4", "d4", "c4",
+      "s1", "s2", "s3", "h1", "h2", "h3", "d1", "d2", "d3", "c1", "c2", "c3", "s11", "s12", "s13", "h11", "h12", "h13", "d11", "d12", "d13", "c11", "c12", "c13"
+    ],
+    "moves": [
+      {"type": "DEAL_STOCK"},
+      {"type": "TO_FOUNDATION", "fromType": 0, "toIdx": 0}
+    ]
+  }
+]

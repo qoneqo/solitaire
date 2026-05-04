@@ -4,7 +4,6 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.qoneqo.solitaire.data.AppDatabase
-import com.qoneqo.solitaire.data.SaveStateEntity
 import com.qoneqo.solitaire.data.StatEntity
 import com.qoneqo.solitaire.domain.GameState
 import kotlinx.coroutines.Dispatchers
@@ -13,13 +12,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 
 class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     private val db = AppDatabase.getDatabase(application)
-    private val saveStateDao = db.saveStateDao()
     private val statDao = db.statDao()
 
     private val _score = MutableStateFlow(0)
@@ -54,26 +50,6 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     fun updateMoves(newMoves: Int) {
         _moves.value = newMoves
-    }
-
-    fun saveGame(gameState: GameState) {
-        viewModelScope.launch {
-            val json = Json.encodeToString(gameState)
-            saveStateDao.saveGame(SaveStateEntity(id = 1, stateJson = json))
-        }
-    }
-
-    suspend fun loadGame(): GameState? {
-        return withContext(Dispatchers.IO) {
-            val entity = saveStateDao.loadGame()
-            if (entity != null) {
-                try {
-                    Json.decodeFromString<GameState>(entity.stateJson)
-                } catch (e: Exception) {
-                    null
-                }
-            } else null
-        }
     }
 
     fun onGameWon() {
