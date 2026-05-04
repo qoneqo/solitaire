@@ -39,4 +39,6 @@ class SoundManager(private val context: Context) {
     fun setSoundEnabled(enabled: Boolean) {
         soundEnabled = enabled
     }
+
+    fun isSoundEnabled(): Boolean = soundEnabled
 }

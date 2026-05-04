@@ -97,4 +97,10 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         stopTimer()
         startTimer()
     }
+
+    suspend fun loadHighScore(): Int? {
+        return withContext(Dispatchers.IO) {
+            statDao.getBestScore()
+        }
+    }
 }

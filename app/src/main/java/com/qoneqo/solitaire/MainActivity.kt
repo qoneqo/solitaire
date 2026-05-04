@@ -35,10 +35,9 @@ class MainActivity : AppCompatActivity(), GameEventListener {
 
         gameSurfaceView.gameEventListener = this
         
-        // Use generic View or actual FloatingActionButton class to avoid ClassCastException
-        findViewById<android.view.View>(R.id.newGameButton).setOnClickListener {
-            viewModel.resetGame()
-            gameSurfaceView.setupNewGame()
+        // Settings Button replaced New Game Button
+        findViewById<android.view.View>(R.id.settingsButton).setOnClickListener {
+            showSettingsMenu()
         }
 
         findViewById<android.view.View>(R.id.undoButton).setOnClickListener {
@@ -128,6 +127,45 @@ class MainActivity : AppCompatActivity(), GameEventListener {
                 .setCancelable(false)
                 .show()
         }
+    }
+
+    private fun showSettingsMenu() {
+        val options = arrayOf(
+            "New Game",
+            if (soundManager.isSoundEnabled()) "Disable Sound" else "Enable Sound",
+            "Check High Score",
+            "Exit"
+        )
+
+        AlertDialog.Builder(this)
+            .setTitle("Settings")
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> { // New Game
+                        viewModel.resetGame()
+                        gameSurfaceView.setupNewGame()
+                    }
+                    1 -> { // Toggle Sound
+                        soundManager.setSoundEnabled(!soundManager.isSoundEnabled())
+                    }
+                    2 -> { // High Score
+                        lifecycleScope.launch {
+                            val best = viewModel.loadHighScore()
+                            runOnUiThread {
+                                AlertDialog.Builder(this@MainActivity)
+                                    .setTitle("High Score")
+                                    .setMessage("Your best score is: ${best ?: 0}")
+                                    .setPositiveButton("OK", null)
+                                    .show()
+                            }
+                        }
+                    }
+                    3 -> { // Exit
+                        finish()
+                    }
+                }
+            }
+            .show()
     }
 
     override fun playSound(soundResId: Int) {
