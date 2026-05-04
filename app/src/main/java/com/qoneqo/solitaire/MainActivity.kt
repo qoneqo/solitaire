@@ -35,6 +35,14 @@ class MainActivity : AppCompatActivity(), GameEventListener {
 
         gameSurfaceView.gameEventListener = this
         
+        // Measure UI to avoid overlap with game surface
+        val statsRow = findViewById<android.view.View>(R.id.statsRow)
+        statsRow.post {
+            gameSurfaceView.uiHeaderHeight = statsRow.bottom.toFloat()
+            // Force engine re-init with new height
+            gameSurfaceView.initEngine()
+        }
+
         // Settings Button replaced New Game Button
         findViewById<android.view.View>(R.id.settingsButton).setOnClickListener {
             showSettingsMenu()

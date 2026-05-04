@@ -29,6 +29,7 @@ class GameSurfaceView @JvmOverloads constructor(
     private lateinit var physics: PhysicsEngine
     private lateinit var inputHandler: InputHandler
     private var layout: GameLayout? = null
+    var uiHeaderHeight: Float = 0f
 
     init {
         holder.addCallback(this)
@@ -116,10 +117,19 @@ class GameSurfaceView @JvmOverloads constructor(
         }
         // Tableaus
         for (i in 0 until 7) {
-            gameState.tableaus[i].forEachIndexed { index, card ->
+            val pile = gameState.tableaus[i]
+            // Adaptive vertical offset: if pile is too long, squish it
+            val maxTableauHeight = height.toFloat() - l.tableauY - am.cardHeight - (height * 0.05f)
+            val adaptiveOffset = if (pile.size > 1) {
+                kotlin.math.min(am.verticalOffset, maxTableauHeight / (pile.size - 1))
+            } else {
+                am.verticalOffset
+            }
+
+            pile.forEachIndexed { index, card ->
                 if (!card.isSnappingBack && inputHandler.activeCardStack?.contains(card) != true) {
                     card.renderX = l.tableauX[i]
-                    card.renderY = l.tableauY + index * am.verticalOffset
+                    card.renderY = l.tableauY + index * adaptiveOffset
                 }
             }
         }
@@ -136,7 +146,7 @@ class GameSurfaceView @JvmOverloads constructor(
         initEngine()
     }
 
-    private fun initEngine() {
+    fun initEngine() {
         val w = width.toFloat()
         val h = height.toFloat()
         if (w <= 0 || h <= 0) return
@@ -145,17 +155,31 @@ class GameSurfaceView @JvmOverloads constructor(
         val am = assetManager!!
         
         // Calculate Layout
-        val marginX = w * GameConfig.MARGIN_X_RATIO
         val marginY = h * GameConfig.MARGIN_Y_RATIO
-        val spacingX = (w - (2 * marginX) - (7 * am.cardWidth)) / 6f
-        val stockY = marginY + (h * GameConfig.TOP_UI_OFFSET_RATIO)
+        val stockY = if (uiHeaderHeight > 0) {
+            uiHeaderHeight + marginY
+        } else {
+            marginY + (h * GameConfig.TOP_UI_OFFSET_RATIO)
+        }
         
-        val fX = FloatArray(4) { i -> marginX + (i + 3) * (am.cardWidth + spacingX) }
-        val tX = FloatArray(7) { i -> marginX + i * (am.cardWidth + spacingX) }
+        // Ensure spacing between columns is at least 2dp
+        val minSpacing = 2f * context.resources.displayMetrics.density
+        val totalBoardWidth = (7 * am.cardWidth) + (6 * minSpacing)
+        
+        // Center the board if screen is wider than board + default margins
+        val dynamicMarginX = if (w > totalBoardWidth + (w * 0.04f)) {
+            (w - totalBoardWidth) / 2f
+        } else {
+            w * 0.02f
+        }
+        val spacingX = (w - (2 * dynamicMarginX) - (7 * am.cardWidth)) / 6f
+        
+        val fX = FloatArray(4) { i -> dynamicMarginX + (i + 3) * (am.cardWidth + spacingX) }
+        val tX = FloatArray(7) { i -> dynamicMarginX + i * (am.cardWidth + spacingX) }
         
         layout = GameLayout(
-            stockX = marginX, stockY = stockY,
-            wasteX = marginX + am.cardWidth + spacingX, wasteY = stockY,
+            stockX = dynamicMarginX, stockY = stockY,
+            wasteX = dynamicMarginX + am.cardWidth + spacingX, wasteY = stockY,
             foundationX = fX, foundationY = stockY,
             tableauX = tX, tableauY = stockY + am.cardHeight + marginY
         )

@@ -22,11 +22,15 @@ class CardAssetManager(private val context: Context, screenWidth: Int, screenHei
     lateinit var emptySlotBitmap: Bitmap
 
     init {
-        // cardWidth is typically screenWidth / 8 to fit 7 columns + some margin
-        cardWidth = min(screenWidth / 8f, 150f * context.resources.displayMetrics.density)
+        // Dynamic card width: Fit 7 columns + margins
+        // (screenWidth - (2 * margin_ratio * screenWidth)) / 7
+        val maxPossibleWidth = (screenWidth * 0.95f) / 7.2f 
+        val heightConstraint = screenHeight * 0.18f // Max 18% of screen height
+        
+        cardWidth = min(maxPossibleWidth, heightConstraint / 1.4f)
         cardHeight = cardWidth * 1.4f
-        verticalOffset = cardHeight / 4f
-
+        verticalOffset = cardHeight / 3.5f
+ 
         loadAssets()
     }
 
