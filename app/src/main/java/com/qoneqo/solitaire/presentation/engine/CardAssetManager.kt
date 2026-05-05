@@ -116,9 +116,9 @@ class CardAssetManager(private val context: Context, screenWidth: Int, screenHei
         canvas.drawRoundRect(rectF, 16f, 16f, paint)
         
         // Draw border
-        paint.color = Color.argb(60, 0, 0, 0)
+        paint.color = Color.parseColor(GameConfig.TABLEAU_BORDER_COLOR)
         paint.style = Paint.Style.STROKE
-        paint.strokeWidth = 3f
+        paint.strokeWidth = GameConfig.UI_BORDER_WIDTH
         canvas.drawRoundRect(rectF, 16f, 16f, paint)
     }
 

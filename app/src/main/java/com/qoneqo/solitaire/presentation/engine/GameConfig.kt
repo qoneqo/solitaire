@@ -15,8 +15,8 @@ object GameConfig {
     // Visuals
     const val EMPTY_SLOT_COLOR = "#c2d0cd"
     const val BACKGROUND_COLOR = "#9fb5b0"
-    const val TABLEAU_BORDER_COLOR = "#4D000000"
-    const val EMPTY_SLOT_BORDER_ALPHA = 60
+    const val TABLEAU_BORDER_COLOR = "#33000000" // Subtler 20% black
+    const val UI_BORDER_WIDTH = 3f
     const val CARD_CORNER_RADIUS = 16f
     
     // Gameplay

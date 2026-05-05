@@ -15,7 +15,7 @@ class WorldRenderer(private val am: CardAssetManager) {
     private val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.parseColor(GameConfig.TABLEAU_BORDER_COLOR)
         style = Paint.Style.STROKE
-        strokeWidth = 2f
+        strokeWidth = GameConfig.UI_BORDER_WIDTH
     }
     
     private val highlightPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -42,23 +42,27 @@ class WorldRenderer(private val am: CardAssetManager) {
         canvas.drawColor(Color.parseColor(GameConfig.BACKGROUND_COLOR))
 
         // 1. Draw empty slots and tableau borders
-        canvas.drawBitmap(am.emptySlotBitmap, layout.stockX, layout.stockY, renderPaint)
-        canvas.drawBitmap(am.emptySlotBitmap, layout.wasteX, layout.wasteY, renderPaint)
+        canvas.drawBitmap(am.emptySlotBitmap, Math.round(layout.stockX).toFloat(), Math.round(layout.stockY).toFloat(), renderPaint)
+        canvas.drawBitmap(am.emptySlotBitmap, Math.round(layout.wasteX).toFloat(), Math.round(layout.wasteY).toFloat(), renderPaint)
         
         for (i in 0 until 4) {
-            canvas.drawBitmap(am.emptySlotBitmap, layout.foundationX[i], layout.foundationY, renderPaint)
+            canvas.drawBitmap(am.emptySlotBitmap, Math.round(layout.foundationX[i]).toFloat(), Math.round(layout.foundationY).toFloat(), renderPaint)
         }
         
         for (i in 0 until 7) {
-            // Draw tableau column area border
+            // Precise integer-aligned rect for the tableau column
+            val tx = Math.round(layout.tableauX[i]).toFloat()
+            val ty = Math.round(layout.tableauY).toFloat()
+            val tw = Math.round(am.cardWidth).toFloat()
+            
             val tableauRect = RectF(
-                layout.tableauX[i] - 4f,
-                layout.tableauY - 4f,
-                layout.tableauX[i] + am.cardWidth + 4f,
+                tx - 4f,
+                ty - 4f,
+                tx + tw + 4f,
                 canvas.height.toFloat() - 40f
             )
             canvas.drawRoundRect(tableauRect, 16f, 16f, borderPaint)
-            canvas.drawBitmap(am.emptySlotBitmap, layout.tableauX[i], layout.tableauY, renderPaint)
+            canvas.drawBitmap(am.emptySlotBitmap, tx, ty, renderPaint)
         }
 
         // 2. Draw card stacks (except active cards)
