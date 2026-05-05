@@ -1,5 +1,7 @@
 package com.qoneqo.solitaire
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
@@ -133,6 +135,7 @@ class MainActivity : AppCompatActivity(), GameEventListener {
             "Auto Solve",
             if (soundManager.isSoundEnabled()) "Disable Sound" else "Enable Sound",
             "Check High Score",
+            "Donate",
             "Exit"
         )
 
@@ -169,7 +172,11 @@ class MainActivity : AppCompatActivity(), GameEventListener {
                             }
                         }
                     }
-                    4 -> { // Exit
+                    4 -> { // Donate
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://qoneqo.id/support"))
+                        startActivity(intent)
+                    }
+                    5 -> { // Exit
                         finish()
                     }
                 }
