@@ -117,7 +117,7 @@ class MainActivity : AppCompatActivity(), GameEventListener {
             soundManager.playSound(R.raw.win_sound)
             AlertDialog.Builder(this)
                 .setTitle("You Won!")
-                .setMessage("Congratulations! You won the game in ${viewModel.timeSeconds.value} seconds with ${viewModel.moves.value} moves. (Logbook ID: ${gameSurfaceView.getCurrentLogbookId()})")
+                .setMessage("Congratulations! You won the game in ${viewModel.timeSeconds.value} seconds with ${viewModel.moves.value} moves.")
                 .setPositiveButton("New Game") { _, _ ->
                     viewModel.resetGame()
                     gameSurfaceView.setupNewGame()
@@ -180,6 +180,12 @@ class MainActivity : AppCompatActivity(), GameEventListener {
     override fun playSound(soundResId: Int) {
         runOnUiThread {
             soundManager.playSound(soundResId)
+        }
+    }
+
+    override fun onEmitParticles(x: Float, y: Float, color: Int) {
+        runOnUiThread {
+            gameSurfaceView.emitParticles(x, y, color)
         }
     }
 

@@ -124,7 +124,11 @@ class CardAssetManager(private val context: Context, screenWidth: Int, screenHei
 
     fun getCardBitmap(card: Card): Bitmap {
         if (!card.isFaceUp) return cardBackBitmap
-        val name = "card_${card.rank.letter}${card.suit.letter}"
+        return getCardBitmap(card.suit, card.rank)
+    }
+
+    fun getCardBitmap(suit: com.qoneqo.solitaire.domain.Suit, rank: com.qoneqo.solitaire.domain.Rank): Bitmap {
+        val name = "card_${rank.letter}${suit.letter}"
         return cardBitmaps[name] ?: cardBackBitmap
     }
 }

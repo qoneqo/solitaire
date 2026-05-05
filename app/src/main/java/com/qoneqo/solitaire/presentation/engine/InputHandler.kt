@@ -250,6 +250,12 @@ class InputHandler(
             eventListener?.playSound(com.qoneqo.solitaire.R.raw.card_place)
             eventListener?.onMovesChanged(gameState.moves)
             eventListener?.onScoreChanged(gameState.score)
+            
+            // Trigger Particles
+            val targetX = stack.first().originalX + am.cardWidth / 2f
+            val targetY = stack.first().originalY + am.cardHeight / 2f
+            val pColor = if (toType == 1) android.graphics.Color.YELLOW else android.graphics.Color.WHITE
+            eventListener?.onEmitParticles(targetX, targetY, pColor)
         }
     }
 }

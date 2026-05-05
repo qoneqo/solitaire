@@ -2,6 +2,7 @@ package com.qoneqo.solitaire.presentation.engine
 
 import android.content.Context
 import android.graphics.Canvas
+import android.graphics.Color
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.SurfaceHolder
@@ -37,12 +38,17 @@ class GameSurfaceView @JvmOverloads constructor(
     private var logbookStepIndex: Int = 0
     private var isGameFinished: Boolean = false
 
-    // Loop Detection & Hint
+    // Visual Effects
     private val moveHistory = LinkedList<LogbookMove>()
     private var recycleCount: Int = 0
     private var movesSinceLastProgress: Int = 0
     private var hintedCard: Card? = null
     private var hintTimer: Float = 0f
+    
+    private val particles = mutableListOf<Particle>()
+    private val cascadingCards = mutableListOf<CascadingCard>()
+    private var isWinAnimationActive = false
+    private var cascadeTimer = 0f
 
     fun getCurrentLogbookId(): Int = currentLogbookEntry?.id ?: -1
 
@@ -53,10 +59,10 @@ class GameSurfaceView @JvmOverloads constructor(
         setupNewGame()
     }
 
-    fun setupNewGame() {
+    fun setupNewGame(specificId: Int = -1) {
         synchronized(gameStateLock) {
             gameState = GameState()
-            val entry = LogbookManager.getRandomEntry()
+            val entry = if (specificId != -1) LogbookManager.getEntry(specificId) else LogbookManager.getRandomEntry()
             
             if (entry != null) {
                 currentLogbookEntry = entry
@@ -73,7 +79,7 @@ class GameSurfaceView @JvmOverloads constructor(
                         gameState.tableaus[i].add(card)
                     }
                 }
-                gameState.stock.addAll(deck)
+                gameState.stock.addAll(deck.reversed())
                 android.util.Log.i("GameSurfaceView", "New Game started using Logbook ID: ${entry.id}")
             } else {
                 android.util.Log.e("GameSurfaceView", "CRITICAL ERROR: Logbook is empty! Cannot start game.")
@@ -85,6 +91,9 @@ class GameSurfaceView @JvmOverloads constructor(
             isGameFinished = false
             isAutoSolving = false
             hintedCard = null
+            particles.clear()
+            cascadingCards.clear()
+            isWinAnimationActive = false
             updateCardPositions()
         }
     }
@@ -117,6 +126,22 @@ class GameSurfaceView @JvmOverloads constructor(
                 }
                 hintTimer = 3.0f
             }
+        }
+    }
+
+    fun emitParticles(x: Float, y: Float, color: Int = Color.YELLOW, count: Int = 15) {
+        val random = Random()
+        repeat(count) {
+            val angle = random.nextDouble() * 2.0 * Math.PI
+            val speed = 100f + random.nextFloat() * 200f
+            particles.add(Particle(
+                x = x,
+                y = y,
+                vx = (speed * Math.cos(angle)).toFloat(),
+                vy = (speed * Math.sin(angle)).toFloat(),
+                color = color,
+                life = 0.5f + random.nextFloat() * 0.5f
+            ))
         }
     }
 
@@ -223,6 +248,9 @@ class GameSurfaceView @JvmOverloads constructor(
             val am = assetManager ?: return
             physics.update(dt, gameState, l, am)
             
+            updateParticles(dt)
+            if (isWinAnimationActive) updateWinAnimation(dt)
+
             if (hintTimer > 0) {
                 hintTimer -= dt
                 if (hintTimer <= 0) hintedCard = null
@@ -240,24 +268,122 @@ class GameSurfaceView @JvmOverloads constructor(
         }
     }
 
+    private fun updateParticles(dt: Float) {
+        val iterator = particles.iterator()
+        while (iterator.hasNext()) {
+            val p = iterator.next()
+            p.life -= dt
+            if (p.life <= 0) {
+                iterator.remove()
+            } else {
+                p.x += p.vx * dt
+                p.y += p.vy * dt
+                p.alpha = (255 * (p.life / p.maxLife)).toInt()
+            }
+        }
+    }
+
+    private fun updateWinAnimation(dt: Float) {
+        val am = assetManager ?: return
+        val w = width.toFloat()
+        val h = height.toFloat()
+
+        // Update existing cascading cards
+        val iterator = cascadingCards.iterator()
+        while (iterator.hasNext()) {
+            val c = iterator.next()
+            c.x += c.vx * dt
+            c.y += c.vy * dt
+            c.vy += 1200f * dt // Gravity
+
+            if (c.y + am.cardHeight > h) {
+                c.y = h - am.cardHeight
+                c.vy = -c.vy * 0.7f // Bounce
+                if (Math.abs(c.vy) > 100f) {
+                    gameEventListener?.playSound(com.qoneqo.solitaire.R.raw.card_deal)
+                }
+            }
+
+            if (c.x > w || c.x + am.cardWidth < 0) {
+                iterator.remove()
+            }
+        }
+
+        // Spawn next card in sequence
+        cascadeTimer += dt
+        if (cascadeTimer >= 0.1f) {
+            cascadeTimer = 0f
+            spawnNextCascadingCard()
+        }
+        
+        // Final condition: if all cards are gone and sequence is done
+        if (cascadingCards.isEmpty() && isAllCardsSpawned()) {
+            isWinAnimationActive = false
+            gameEventListener?.onGameWon() // Finally show dialog
+        }
+    }
+
+    private var nextCardToSpawnIdx = 12 // K down to A
+    private var nextFoundationToSpawnIdx = 0
+
+    private fun spawnNextCascadingCard() {
+        val l = layout ?: return
+        val random = Random()
+        
+        // Search for a foundation that still has cards
+        var found = false
+        for (fIdx in 0 until 4) {
+            val pile = gameState.foundations[fIdx]
+            if (pile.isNotEmpty()) {
+                val card = pile.removeAt(pile.size - 1)
+                val vx = if (random.nextBoolean()) 150f + random.nextFloat() * 300f else -150f - random.nextFloat() * 300f
+                cascadingCards.add(CascadingCard(
+                    cardIndex = pile.size,
+                    foundationIndex = fIdx,
+                    x = l.foundationX[fIdx],
+                    y = l.foundationY,
+                    vx = vx,
+                    vy = -200f - random.nextFloat() * 400f,
+                    suit = card.suit,
+                    rank = card.rank
+                ))
+                gameEventListener?.playSound(com.qoneqo.solitaire.R.raw.card_place)
+                found = true
+                break
+            }
+        }
+        
+        if (!found) nextCardToSpawnIdx = -1 // Marker for all spawned
+    }
+
+    private fun isAllCardsSpawned(): Boolean = gameState.foundations.all { it.isEmpty() }
+
     private fun performSolverMove() {
         var nextMove: LogbookMove? = null
-        
+
+        // Try logbook moves first; if invalid, fall through to solver
         if (isUsingLogbook) {
             val entry = currentLogbookEntry
             if (entry != null && logbookStepIndex < entry.moves.size) {
-                nextMove = entry.moves[logbookStepIndex]
+                val logbookMove = entry.moves[logbookStepIndex]
                 logbookStepIndex++
+                if (validateAndExecuteMove(logbookMove)) {
+                    detectLoop(logbookMove)
+                    return
+                } else {
+                    // Logbook move invalid — abandon logbook, fall through to solver
+                    android.util.Log.w("GameBot", "Logbook move #$logbookStepIndex invalid, switching to solver.")
+                    isUsingLogbook = false
+                }
             } else {
                 isUsingLogbook = false
             }
         }
-        
+
+        nextMove = InternalSolver.getNextMove(gameState)
+
         if (nextMove == null) {
-            nextMove = InternalSolver.getNextMove(gameState)
-        }
-        
-        if (nextMove == null) {
+            android.util.Log.w("GameBot", "Solver returned null — no moves available. Stopping.")
             isAutoSolving = false
             return
         }
@@ -265,10 +391,8 @@ class GameSurfaceView @JvmOverloads constructor(
         if (validateAndExecuteMove(nextMove)) {
             detectLoop(nextMove)
         } else {
-            if (isUsingLogbook) {
-                isUsingLogbook = false
-                performSolverMove()
-            }
+            android.util.Log.w("GameBot", "Solver move invalid: $nextMove")
+            isAutoSolving = false
         }
     }
 
@@ -278,8 +402,25 @@ class GameSurfaceView @JvmOverloads constructor(
             "RECYCLE_WASTE" -> if (gameState.waste.isNotEmpty() && gameState.stock.isEmpty()) { executeMove(move); return true }
             "TO_FOUNDATION" -> {
                 val fromPile = if (move.fromType == 0) gameState.waste else gameState.tableaus[move.fromIdx]
-                if (fromPile.isNotEmpty() && SolitaireRules.canMoveToFoundation(fromPile.last(), gameState.foundations[move.toIdx])) {
-                    executeMove(move); return true
+                if (fromPile.isNotEmpty()) {
+                    val card = fromPile.last()
+                    // If logbook specifies an index, try it first, otherwise find any valid
+                    var targetIdx = move.toIdx
+                    if (targetIdx == -1 || !SolitaireRules.canMoveToFoundation(card, gameState.foundations[targetIdx])) {
+                        targetIdx = -1
+                        for (i in 0 until 4) {
+                            if (SolitaireRules.canMoveToFoundation(card, gameState.foundations[i])) {
+                                targetIdx = i
+                                break
+                            }
+                        }
+                    }
+                    
+                    if (targetIdx != -1) {
+                        // Update move with correct index for execution
+                        val correctedMove = move.copy(toIdx = targetIdx)
+                        executeMove(correctedMove); return true
+                    }
                 }
             }
             "TO_TABLEAU" -> {
@@ -331,6 +472,7 @@ class GameSurfaceView @JvmOverloads constructor(
                 gameEventListener?.playSound(com.qoneqo.solitaire.R.raw.card_place)
                 gameEventListener?.onScoreChanged(gameState.score)
                 gameEventListener?.onMovesChanged(gameState.moves)
+                emitParticles(l.foundationX[move.toIdx] + am.cardWidth / 2f, l.foundationY + am.cardHeight / 2f, Color.YELLOW)
             }
             "TO_TABLEAU" -> {
                 val fromPile = if (move.fromType == 0) gameState.waste else gameState.tableaus[move.fromIdx]
@@ -349,6 +491,7 @@ class GameSurfaceView @JvmOverloads constructor(
                 gameState.moves++
                 gameEventListener?.playSound(com.qoneqo.solitaire.R.raw.card_place)
                 gameEventListener?.onMovesChanged(gameState.moves)
+                emitParticles(l.tableauX[move.toIdx] + am.cardWidth / 2f, l.tableauY + (toPile.size - 1) * am.verticalOffset + am.cardHeight / 2f, Color.WHITE)
             }
         }
         updateCardPositions()
@@ -356,17 +499,30 @@ class GameSurfaceView @JvmOverloads constructor(
 
     private fun detectLoop(move: LogbookMove) {
         if (isUsingLogbook) return
+
         moveHistory.add(move)
-        if (moveHistory.size > 6) moveHistory.removeFirst()
+        if (moveHistory.size > 8) moveHistory.removeFirst()
+
+        // Detect A->B->A->B tableau loop
         if (moveHistory.size >= 4) {
             val m1 = moveHistory[moveHistory.size - 4]; val m2 = moveHistory[moveHistory.size - 3]
             val m3 = moveHistory[moveHistory.size - 2]; val m4 = moveHistory[moveHistory.size - 1]
-            if (m1 == m3 && m2 == m4 && m1.type == "TO_TABLEAU" && m2.type == "TO_TABLEAU" && m1.fromIdx == m2.toIdx && m1.toIdx == m2.fromIdx) {
-                stuck("Bot Terjebak! Silakan gerakkan kartu manual atau mulai game baru.")
+            if (m1 == m3 && m2 == m4
+                && m1.type == "TO_TABLEAU" && m2.type == "TO_TABLEAU"
+                && m1.fromIdx == m2.toIdx && m1.toIdx == m2.fromIdx) {
+                stuck("Bot Terjebak! Loop terdeteksi. Silakan gerakkan kartu manual atau mulai game baru.")
+                return
             }
         }
-        if (move.type == "RECYCLE_WASTE") { recycleCount++; if (recycleCount >= 3) stuck("Bot Terjebak! Silakan gerakkan kartu manual atau mulai game baru.") }
-        else if (move.type != "DEAL_STOCK") recycleCount = 0
+
+        // Track recycle cycles — only reset after a Foundation move (real progress)
+        when (move.type) {
+            "RECYCLE_WASTE" -> {
+                recycleCount++
+                if (recycleCount >= 3) stuck("Bot Terjebak! Tidak ada kartu berguna di deck. Silakan gerakkan kartu manual atau mulai game baru.")
+            }
+            "TO_FOUNDATION" -> recycleCount = 0 // Real progress, reset cycle counter
+        }
     }
 
     private fun stuck(message: String) {
@@ -377,10 +533,11 @@ class GameSurfaceView @JvmOverloads constructor(
     fun render(canvas: Canvas) {
         val l = layout ?: return
         val am = assetManager ?: return
-        renderer.render(canvas, gameState, l, inputHandler.activeCardStack, hintedCard)
+        renderer.render(canvas, gameState, l, inputHandler.activeCardStack, hintedCard, particles, cascadingCards)
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
+        if (isWinAnimationActive) return false
         synchronized(gameStateLock) {
             val l = layout ?: return false
             val handled = inputHandler.onTouchEvent(event, gameState, l)
@@ -393,10 +550,11 @@ class GameSurfaceView @JvmOverloads constructor(
     }
 
     private fun checkWinCondition() {
-        if (!isGameFinished && gameState.foundations.all { it.size == 13 }) {
+        if (!isGameFinished && !isWinAnimationActive && gameState.foundations.all { it.size == 13 }) {
             isGameFinished = true
             isAutoSolving = false
-            gameEventListener?.onGameWon()
+            isWinAnimationActive = true // Start cascade instead of showing dialog immediately
+            android.util.Log.d("GameBot", "Starting Win Cascade Animation!")
         }
     }
 }

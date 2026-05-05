@@ -30,7 +30,9 @@ class WorldRenderer(private val am: CardAssetManager) {
         gameState: GameState, 
         layout: GameLayout, 
         activeCardStack: List<Card>?,
-        hintedCard: Card? = null
+        hintedCard: Card? = null,
+        particles: List<Particle> = emptyList(),
+        cascadingCards: List<CascadingCard> = emptyList()
     ) {
         canvas.drawColor(Color.parseColor(GameConfig.BACKGROUND_COLOR))
 
@@ -63,6 +65,20 @@ class WorldRenderer(private val am: CardAssetManager) {
         // 3. Draw active cards on top
         activeCardStack?.forEach { card ->
             canvas.drawBitmap(am.getCardBitmap(card), card.renderX, card.renderY, renderPaint)
+        }
+
+        // 4. Draw Particles
+        particles.forEach { p ->
+            renderPaint.color = p.color
+            renderPaint.alpha = p.alpha
+            canvas.drawCircle(p.x, p.y, 6f * (p.life / p.maxLife), renderPaint)
+        }
+        renderPaint.alpha = 255 // reset
+
+        // 5. Draw Cascading Cards
+        cascadingCards.forEach { c ->
+            val bitmap = am.getCardBitmap(c.suit, c.rank)
+            canvas.drawBitmap(bitmap, c.x, c.y, renderPaint)
         }
     }
 

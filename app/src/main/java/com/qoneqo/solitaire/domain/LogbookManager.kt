@@ -37,6 +37,10 @@ object LogbookManager {
         }
     }
 
+    fun getEntry(id: Int): LogbookEntry? {
+        return entries.find { it.id == id }
+    }
+
     fun getRandomEntry(): LogbookEntry? {
         if (entries.isEmpty()) {
             android.util.Log.w("LogbookManager", "No entries available in logbook.")
