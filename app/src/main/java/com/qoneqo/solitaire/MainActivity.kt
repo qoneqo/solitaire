@@ -141,7 +141,7 @@ class MainActivity : AppCompatActivity(), GameEventListener {
             
             scoreView.text = "${viewModel.score.value}"
             timeView.text = "${viewModel.timeSeconds.value}s"
-            messageView.text = "Selamat! Anda memenangkan game dalam ${viewModel.moves.value} gerakan."
+            messageView.text = "Congratulations! You won the game in ${viewModel.moves.value} moves."
             
             val dialog = AlertDialog.Builder(this, R.style.CozyDialogTheme)
                 .setView(dialogView)
