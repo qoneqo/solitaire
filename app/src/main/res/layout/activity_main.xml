@@ -134,10 +134,10 @@
         android:layout_margin="24dp"
         android:src="@android:drawable/ic_menu_revert"
         android:soundEffectsEnabled="false"
-        app:backgroundTint="#FF9800"
+        app:backgroundTint="#c2d0cd"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:tint="#FFFFFF" />
+        app:tint="#2d3436" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/hintButton"
@@ -146,11 +146,11 @@
         android:layout_margin="24dp"
         android:src="@android:drawable/ic_menu_help"
         android:soundEffectsEnabled="false"
-        app:backgroundTint="#4CAF50"
+        app:backgroundTint="#c2d0cd"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@id/settingsButton"
         app:layout_constraintStart_toEndOf="@id/undoButton"
-        app:tint="#FFFFFF" />
+        app:tint="#2d3436" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/settingsButton"
@@ -159,9 +159,9 @@
         android:layout_margin="24dp"
         android:src="@android:drawable/ic_menu_manage"
         android:soundEffectsEnabled="false"
-        app:backgroundTint="#2196F3"
+        app:backgroundTint="#c2d0cd"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:tint="#FFFFFF" />
+        app:tint="#2d3436" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

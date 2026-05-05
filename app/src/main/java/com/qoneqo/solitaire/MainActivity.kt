@@ -110,11 +110,21 @@ class MainActivity : AppCompatActivity(), GameEventListener {
 
     override fun onBotStuck(message: String) {
         runOnUiThread {
-            AlertDialog.Builder(this)
-                .setTitle("Bot Terjebak!")
-                .setMessage(message)
-                .setPositiveButton("OK", null)
-                .show()
+            val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_bot_stuck, null)
+            val messageView = dialogView.findViewById<TextView>(R.id.stuckMessage)
+            val okButton = dialogView.findViewById<Button>(R.id.okButton)
+            
+            messageView.text = message
+            
+            val dialog = AlertDialog.Builder(this, R.style.CozyDialogTheme)
+                .setView(dialogView)
+                .create()
+                
+            okButton.setOnClickListener { dialog.dismiss() }
+            dialog.show()
+            
+            val width = (resources.displayMetrics.widthPixels * 0.85).toInt()
+            dialog.window?.setLayout(width, ViewGroup.LayoutParams.WRAP_CONTENT)
         }
     }
 
@@ -122,81 +132,107 @@ class MainActivity : AppCompatActivity(), GameEventListener {
         runOnUiThread {
             viewModel.onGameWon()
             soundManager.playSound(R.raw.win_sound)
-            AlertDialog.Builder(this)
-                .setTitle("You Won!")
-                .setMessage("Congratulations! You won the game in ${viewModel.timeSeconds.value} seconds with ${viewModel.moves.value} moves.")
-                .setPositiveButton("New Game") { _, _ ->
-                    viewModel.resetGame()
-                    gameSurfaceView.setupNewGame()
-                }
+            
+            val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_game_won, null)
+            val messageView = dialogView.findViewById<TextView>(R.id.winMessage)
+            val scoreView = dialogView.findViewById<TextView>(R.id.finalScore)
+            val timeView = dialogView.findViewById<TextView>(R.id.finalTime)
+            val newGameButton = dialogView.findViewById<Button>(R.id.newGameButton)
+            
+            scoreView.text = "${viewModel.score.value}"
+            timeView.text = "${viewModel.timeSeconds.value}s"
+            messageView.text = "Selamat! Anda memenangkan game dalam ${viewModel.moves.value} gerakan."
+            
+            val dialog = AlertDialog.Builder(this, R.style.CozyDialogTheme)
+                .setView(dialogView)
                 .setCancelable(false)
-                .show()
+                .create()
+                
+            newGameButton.setOnClickListener {
+                dialog.dismiss()
+                viewModel.resetGame()
+                gameSurfaceView.setupNewGame()
+            }
+            dialog.show()
+            
+            val width = (resources.displayMetrics.widthPixels * 0.90).toInt()
+            dialog.window?.setLayout(width, ViewGroup.LayoutParams.WRAP_CONTENT)
         }
     }
 
     private fun showSettingsMenu() {
-        val options = arrayOf(
-            "New Game",
-            "Auto Solve",
-            if (soundManager.isSoundEnabled()) "Disable Sound" else "Enable Sound",
-            "Check High Score",
-            "Donate",
-            "Exit"
-        )
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_settings, null)
+        val btnNewGame = dialogView.findViewById<Button>(R.id.btnNewGame)
+        val btnAutoSolve = dialogView.findViewById<Button>(R.id.btnAutoSolve)
+        val btnSound = dialogView.findViewById<Button>(R.id.btnSound)
+        val btnHighScore = dialogView.findViewById<Button>(R.id.btnHighScore)
+        val btnDonate = dialogView.findViewById<Button>(R.id.btnDonate)
+        val btnExit = dialogView.findViewById<Button>(R.id.btnExit)
 
-        AlertDialog.Builder(this)
-            .setTitle("Settings")
-            .setItems(options) { _, which ->
-                when (which) {
-                    0 -> { // New Game
-                        viewModel.resetGame()
-                        gameSurfaceView.setupNewGame()
-                    }
-                    1 -> { // Auto Solve
-                        gameSurfaceView.isAutoSolving = !gameSurfaceView.isAutoSolving
-                    }
-                    2 -> { // Toggle Sound
-                        soundManager.setSoundEnabled(!soundManager.isSoundEnabled())
-                    }
-                    3 -> { // High Score
-                        lifecycleScope.launch {
-                            val topScores = viewModel.loadTopScores()
-                            runOnUiThread {
-                                val dialogView = LayoutInflater.from(this@MainActivity).inflate(R.layout.dialog_high_score, null)
-                                val recyclerView = dialogView.findViewById<RecyclerView>(R.id.scoresRecyclerView)
-                                val closeButton = dialogView.findViewById<Button>(R.id.closeButton)
-                                val titleView = dialogView.findViewById<TextView>(R.id.dialogTitle)
+        btnAutoSolve.text = "Auto Solve: ${if (gameSurfaceView.isAutoSolving) "ON" else "OFF"}"
+        btnSound.text = "Sound: ${if (soundManager.isSoundEnabled()) "ON" else "OFF"}"
 
-                                if (topScores.isEmpty()) {
-                                    titleView.text = "No scores yet!"
-                                } else {
-                                    recyclerView.layoutManager = LinearLayoutManager(this@MainActivity)
-                                    recyclerView.adapter = HighScoreAdapter(topScores)
-                                }
+        val dialog = AlertDialog.Builder(this, R.style.CozyDialogTheme)
+            .setView(dialogView)
+            .create()
 
-                                val dialog = AlertDialog.Builder(this@MainActivity, R.style.CozyDialogTheme)
-                                    .setView(dialogView)
-                                    .create()
+        btnNewGame.setOnClickListener {
+            dialog.dismiss()
+            viewModel.resetGame()
+            gameSurfaceView.setupNewGame()
+        }
 
-                                closeButton.setOnClickListener { dialog.dismiss() }
-                                dialog.show()
-                                
-                                // Responsive adjustment: set dialog width to 90% of screen
-                                val width = (resources.displayMetrics.widthPixels * 0.90).toInt()
-                                dialog.window?.setLayout(width, ViewGroup.LayoutParams.WRAP_CONTENT)
-                            }
-                        }
+        btnAutoSolve.setOnClickListener {
+            gameSurfaceView.isAutoSolving = !gameSurfaceView.isAutoSolving
+            btnAutoSolve.text = "Auto Solve: ${if (gameSurfaceView.isAutoSolving) "ON" else "OFF"}"
+        }
+
+        btnSound.setOnClickListener {
+            soundManager.setSoundEnabled(!soundManager.isSoundEnabled())
+            btnSound.text = "Sound: ${if (soundManager.isSoundEnabled()) "ON" else "OFF"}"
+        }
+
+        btnHighScore.setOnClickListener {
+            dialog.dismiss()
+            lifecycleScope.launch {
+                val topScores = viewModel.loadTopScores()
+                runOnUiThread {
+                    val hsView = LayoutInflater.from(this@MainActivity).inflate(R.layout.dialog_high_score, null)
+                    val recyclerView = hsView.findViewById<RecyclerView>(R.id.scoresRecyclerView)
+                    val closeButton = hsView.findViewById<Button>(R.id.closeButton)
+                    val titleView = hsView.findViewById<TextView>(R.id.dialogTitle)
+
+                    if (topScores.isEmpty()) {
+                        titleView.text = "No scores yet!"
+                    } else {
+                        recyclerView.layoutManager = LinearLayoutManager(this@MainActivity)
+                        recyclerView.adapter = HighScoreAdapter(topScores)
                     }
-                    4 -> { // Donate
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://qoneqo.id/support"))
-                        startActivity(intent)
-                    }
-                    5 -> { // Exit
-                        finish()
-                    }
+
+                    val hsDialog = AlertDialog.Builder(this@MainActivity, R.style.CozyDialogTheme)
+                        .setView(hsView)
+                        .create()
+
+                    closeButton.setOnClickListener { hsDialog.dismiss() }
+                    hsDialog.show()
+                    val width = (resources.displayMetrics.widthPixels * 0.90).toInt()
+                    hsDialog.window?.setLayout(width, ViewGroup.LayoutParams.WRAP_CONTENT)
                 }
             }
-            .show()
+        }
+
+        btnDonate.setOnClickListener {
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://qoneqo.id/support"))
+            startActivity(intent)
+        }
+
+        btnExit.setOnClickListener {
+            finish()
+        }
+
+        dialog.show()
+        val width = (resources.displayMetrics.widthPixels * 0.85).toInt()
+        dialog.window?.setLayout(width, ViewGroup.LayoutParams.WRAP_CONTENT)
     }
 
     override fun playSound(soundResId: Int) {

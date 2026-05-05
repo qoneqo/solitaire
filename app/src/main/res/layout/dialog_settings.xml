@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:background="#9fb5b0"
+    android:padding="24dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="SETTINGS"
+        android:textColor="#2d3436"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:layout_marginBottom="24dp"/>
+
+    <Button
+        android:id="@+id/btnNewGame"
+        style="@style/Widget.Material3.Button.TonalButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="New Game"
+        android:backgroundTint="#c2d0cd"
+        android:textColor="#2d3436"
+        android:layout_marginBottom="8dp"
+        android:textAllCaps="false"/>
+
+    <Button
+        android:id="@+id/btnAutoSolve"
+        style="@style/Widget.Material3.Button.TonalButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Auto Solve: OFF"
+        android:backgroundTint="#c2d0cd"
+        android:textColor="#2d3436"
+        android:layout_marginBottom="8dp"
+        android:textAllCaps="false"/>
+
+    <Button
+        android:id="@+id/btnSound"
+        style="@style/Widget.Material3.Button.TonalButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Sound: ON"
+        android:backgroundTint="#c2d0cd"
+        android:textColor="#2d3436"
+        android:layout_marginBottom="8dp"
+        android:textAllCaps="false"/>
+
+    <Button
+        android:id="@+id/btnHighScore"
+        style="@style/Widget.Material3.Button.TonalButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="High Score"
+        android:backgroundTint="#c2d0cd"
+        android:textColor="#2d3436"
+        android:layout_marginBottom="8dp"
+        android:textAllCaps="false"/>
+
+    <Button
+        android:id="@+id/btnDonate"
+        style="@style/Widget.Material3.Button.TonalButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Support Development"
+        android:backgroundTint="#c2d0cd"
+        android:textColor="#2d3436"
+        android:layout_marginBottom="8dp"
+        android:textAllCaps="false"/>
+
+    <Button
+        android:id="@+id/btnExit"
+        style="@style/Widget.Material3.Button.TextButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Exit Game"
+        android:textColor="#d63031"
+        android:textAllCaps="false"/>
+
+</LinearLayout>
