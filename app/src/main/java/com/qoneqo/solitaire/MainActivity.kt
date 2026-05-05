@@ -3,6 +3,7 @@ package com.qoneqo.solitaire
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
 import androidx.activity.viewModels
@@ -15,6 +16,10 @@ import com.qoneqo.solitaire.presentation.engine.GameEventListener
 import com.qoneqo.solitaire.presentation.engine.GameSurfaceView
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import android.view.LayoutInflater
+import com.qoneqo.solitaire.presentation.HighScoreAdapter
 
 class MainActivity : AppCompatActivity(), GameEventListener {
 
@@ -157,18 +162,28 @@ class MainActivity : AppCompatActivity(), GameEventListener {
                         lifecycleScope.launch {
                             val topScores = viewModel.loadTopScores()
                             runOnUiThread {
-                                val message = if (topScores.isEmpty()) {
-                                    "No scores yet!"
+                                val dialogView = LayoutInflater.from(this@MainActivity).inflate(R.layout.dialog_high_score, null)
+                                val recyclerView = dialogView.findViewById<RecyclerView>(R.id.scoresRecyclerView)
+                                val closeButton = dialogView.findViewById<Button>(R.id.closeButton)
+                                val titleView = dialogView.findViewById<TextView>(R.id.dialogTitle)
+
+                                if (topScores.isEmpty()) {
+                                    titleView.text = "No scores yet!"
                                 } else {
-                                    topScores.joinToString("\n") { 
-                                        "Score: ${it.score} | Moves: ${it.moves} | Time: ${it.timeElapsedSeconds}s"
-                                    }
+                                    recyclerView.layoutManager = LinearLayoutManager(this@MainActivity)
+                                    recyclerView.adapter = HighScoreAdapter(topScores)
                                 }
-                                AlertDialog.Builder(this@MainActivity)
-                                    .setTitle("Top 10 High Scores")
-                                    .setMessage(message)
-                                    .setPositiveButton("OK", null)
-                                    .show()
+
+                                val dialog = AlertDialog.Builder(this@MainActivity, R.style.CozyDialogTheme)
+                                    .setView(dialogView)
+                                    .create()
+
+                                closeButton.setOnClickListener { dialog.dismiss() }
+                                dialog.show()
+                                
+                                // Responsive adjustment: set dialog width to 90% of screen
+                                val width = (resources.displayMetrics.widthPixels * 0.90).toInt()
+                                dialog.window?.setLayout(width, ViewGroup.LayoutParams.WRAP_CONTENT)
                             }
                         }
                     }

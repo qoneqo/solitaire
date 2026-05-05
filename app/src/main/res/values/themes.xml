@@ -29,4 +29,9 @@
         <!-- Customize your theme here. -->
         <item name="floatingActionButtonStyle">@style/FabStyle</item>
     </style>
+
+    <style name="CozyDialogTheme" parent="Theme.Material3.Dark.Dialog">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsTranslucent">true</item>
+    </style>
 </resources>
