@@ -31,6 +31,11 @@ class WorldRenderer(private val am: CardAssetManager) {
         layout: GameLayout, 
         activeCardStack: List<Card>?,
         hintedCard: Card? = null,
+        hintTimer: Float = 0f,
+        hintedSourceX: Float = 0f,
+        hintedSourceY: Float = 0f,
+        hintedTargetX: Float = 0f,
+        hintedTargetY: Float = 0f,
         particles: List<Particle> = emptyList(),
         cascadingCards: List<CascadingCard> = emptyList()
     ) {
@@ -79,6 +84,35 @@ class WorldRenderer(private val am: CardAssetManager) {
         cascadingCards.forEach { c ->
             val bitmap = am.getCardBitmap(c.suit, c.rank)
             canvas.drawBitmap(bitmap, c.x, c.y, renderPaint)
+        }
+
+        // 6. Draw Hint
+        if (hintedCard != null && hintTimer > 0) {
+            val alpha = (Math.min(1.0f, hintTimer) * 150).toInt()
+            highlightPaint.alpha = alpha
+            
+            // Draw highlight on source
+            canvas.drawRoundRect(
+                hintedSourceX - 5f, hintedSourceY - 5f, 
+                hintedSourceX + am.cardWidth + 5f, hintedSourceY + am.cardHeight + 5f, 
+                16f, 16f, highlightPaint
+            )
+            
+            // Draw highlight on target
+            canvas.drawRoundRect(
+                hintedTargetX - 5f, hintedTargetY - 5f, 
+                hintedTargetX + am.cardWidth + 5f, hintedTargetY + am.cardHeight + 5f, 
+                16f, 16f, highlightPaint
+            )
+            
+            // Draw connecting line/arrow
+            highlightPaint.strokeWidth = 4f
+            canvas.drawLine(
+                hintedSourceX + am.cardWidth / 2f, hintedSourceY + am.cardHeight / 2f,
+                hintedTargetX + am.cardWidth / 2f, hintedTargetY + am.cardHeight / 2f,
+                highlightPaint
+            )
+            highlightPaint.strokeWidth = 6f // reset
         }
     }
 

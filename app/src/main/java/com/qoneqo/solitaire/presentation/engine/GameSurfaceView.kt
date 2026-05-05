@@ -43,7 +43,11 @@ class GameSurfaceView @JvmOverloads constructor(
     private var recycleCount: Int = 0
     private var movesSinceLastProgress: Int = 0
     private var hintedCard: Card? = null
-    private var hintTimer: Float = 0f
+    var hintTimer = 0f
+    var hintedSourceX = 0f
+    var hintedSourceY = 0f
+    var hintedTargetX = 0f
+    var hintedTargetY = 0f
     
     private val particles = mutableListOf<Particle>()
     private val cascadingCards = mutableListOf<CascadingCard>()
@@ -111,16 +115,63 @@ class GameSurfaceView @JvmOverloads constructor(
         }
     }
 
+    fun clearHint() {
+        hintedCard = null
+        hintTimer = 0f
+    }
+
     fun showHint() {
         runOnGameThread {
+            val l = layout ?: return@runOnGameThread
+            val am = assetManager ?: return@runOnGameThread
             val move = InternalSolver.getNextMove(gameState)
             if (move != null) {
                 hintedCard = when (move.type) {
-                    "DEAL_STOCK" -> if (gameState.stock.isNotEmpty()) gameState.stock.last() else null
-                    "RECYCLE_WASTE" -> if (gameState.waste.isNotEmpty()) gameState.waste.first() else null
-                    "TO_FOUNDATION", "TO_TABLEAU" -> {
+                    "DEAL_STOCK" -> {
+                        hintedSourceX = l.stockX; hintedSourceY = l.stockY
+                        hintedTargetX = l.wasteX; hintedTargetY = l.wasteY
+                        if (gameState.stock.isNotEmpty()) gameState.stock.last() else null
+                    }
+                    "RECYCLE_WASTE" -> {
+                        hintedSourceX = l.wasteX; hintedSourceY = l.wasteY
+                        hintedTargetX = l.stockX; hintedTargetY = l.stockY
+                        if (gameState.waste.isNotEmpty()) gameState.waste.last() else null
+                    }
+                    "TO_FOUNDATION" -> {
                         val fromPile = if (move.fromType == 0) gameState.waste else gameState.tableaus[move.fromIdx]
-                        if (fromPile.size >= move.cardCount) fromPile[fromPile.size - move.cardCount] else null
+                        if (fromPile.isNotEmpty()) {
+                            val card = fromPile.last()
+                            hintedSourceX = if (move.fromType == 0) l.wasteX else l.tableauX[move.fromIdx]
+                            hintedSourceY = if (move.fromType == 0) l.wasteY else l.tableauY + (fromPile.size - 1) * am.verticalOffset
+                            
+                            // Find correct foundation index
+                            var targetIdx = move.toIdx
+                            if (targetIdx == -1 || !SolitaireRules.canMoveToFoundation(card, gameState.foundations[targetIdx])) {
+                                for (i in 0 until 4) {
+                                    if (SolitaireRules.canMoveToFoundation(card, gameState.foundations[i])) {
+                                        targetIdx = i; break
+                                    }
+                                }
+                            }
+                            if (targetIdx != -1) {
+                                hintedTargetX = l.foundationX[targetIdx]
+                                hintedTargetY = l.foundationY
+                            }
+                            card
+                        } else null
+                    }
+                    "TO_TABLEAU" -> {
+                        val fromPile = if (move.fromType == 0) gameState.waste else gameState.tableaus[move.fromIdx]
+                        if (fromPile.size >= move.cardCount) {
+                            val card = fromPile[fromPile.size - move.cardCount]
+                            hintedSourceX = if (move.fromType == 0) l.wasteX else l.tableauX[move.fromIdx]
+                            hintedSourceY = if (move.fromType == 0) l.wasteY else l.tableauY + (fromPile.size - move.cardCount) * am.verticalOffset
+                            
+                            val toPile = gameState.tableaus[move.toIdx]
+                            hintedTargetX = l.tableauX[move.toIdx]
+                            hintedTargetY = l.tableauY + toPile.size * am.verticalOffset
+                            card
+                        } else null
                     }
                     else -> null
                 }
@@ -436,6 +487,8 @@ class GameSurfaceView @JvmOverloads constructor(
     private fun executeMove(move: LogbookMove) {
         val l = layout ?: return
         val am = assetManager ?: return
+        
+        clearHint()
 
         when (move.type) {
             "DEAL_STOCK" -> {
@@ -533,7 +586,7 @@ class GameSurfaceView @JvmOverloads constructor(
     fun render(canvas: Canvas) {
         val l = layout ?: return
         val am = assetManager ?: return
-        renderer.render(canvas, gameState, l, inputHandler.activeCardStack, hintedCard, particles, cascadingCards)
+        renderer.render(canvas, gameState, l, inputHandler.activeCardStack, hintedCard, hintTimer, hintedSourceX, hintedSourceY, hintedTargetX, hintedTargetY, particles, cascadingCards)
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
@@ -541,8 +594,11 @@ class GameSurfaceView @JvmOverloads constructor(
         synchronized(gameStateLock) {
             val l = layout ?: return false
             val handled = inputHandler.onTouchEvent(event, gameState, l)
+            if (handled) {
+                isUsingLogbook = false
+                clearHint()
+            }
             if (event.action == MotionEvent.ACTION_UP) {
-                if (handled) { isUsingLogbook = false; hintedCard = null }
                 updateCardPositions()
             }
             return handled
