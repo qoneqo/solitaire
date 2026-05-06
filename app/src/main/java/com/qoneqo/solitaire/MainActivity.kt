@@ -110,8 +110,6 @@ class MainActivity : AppCompatActivity(), GameEventListener {
 
         viewModel.startTimer()
         
-        viewModel.startTimer()
-        
         // Forced New Game from Logbook on every start to ensure winnability
         resetButtons()
         gameSurfaceView.setupNewGame()

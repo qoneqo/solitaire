@@ -1,30 +1,34 @@
 # 🃏 Qoneqo Solitaire
 
-High-performance native Android Klondike Solitaire with intelligent solver and guaranteed winnable games.
+High-performance native Android Klondike Solitaire with an intelligent solver, premium aesthetics, and 100% guaranteed winnable games.
 
 ![Solitaire Banner](https://img.shields.io/badge/Android-Native-green?style=for-the-badge&logo=android)
 ![Kotlin](https://img.shields.io/badge/Kotlin-60_FPS-purple?style=for-the-badge&logo=kotlin)
-![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)
 
 ## 🚀 Key Features
-- **60 FPS Native Engine**: Built with custom Canvas rendering for ultimate smoothness.
-- **Winnable Logbook**: 100 professionally verified decks — no more impossible games.
-- **Smart Bot Solver**: High-IQ bot that can solve games or provide advanced hints.
-- **Enhanced Hint System**: Dual highlighting with connecting lines to guide your next move.
-- **Unlimited Undo**: Every action can be reverted seamlessly.
-- **Cascading Win Juice**: Iconic card fountain animation with physical bounce and particles.
-- **Local Stats**: Track your Top 10 scores, moves, and times via Room Database.
-- **Visual Customization**: Dynamic table colors and modern **Glassmorphism (75% opacity)** UI for a premium feel.
-- **Snappy Audio**: Optimized sound effects for instant tactile feedback.
 
-## 📖 Documentation
-Detailed documentation of all features, game rules, and technical architecture can be found in [DOCUMENTATION.md](./DOCUMENTATION.md).
+- **60 FPS Native Engine**: Built with a custom Canvas rendering system for ultimate smoothness and low battery consumption.
+- **Sticky HUD Architecture**: Modern layout with a fixed top area (Stock/Foundations) and a scrollable tableau for better accessibility on any screen size.
+- **Winnable Logbook**: Every game is pulled from a verified collection of solvable decks — no more impossible shuffles.
+- **Smart Bot & Advanced Hints**: High-IQ solver that can guide you through tough spots with visual connection lines and dual highlighting.
+- **Cozy Design & Customization**: 
+  - Dynamic **Glassmorphism** dialogs.
+  - Custom table colors with adaptive UI accents.
+  - Professional sound design and ambient music.
+- **Win Juice**: Iconic card fountain animation with gravity-based physics, bounce effects, and particle sparkles.
+- **Local Rankings**: Track your Top 10 scores, moves, and times via the integrated Room Database.
 
-## 🛠️ Tools
-Developers can find logbook generation and verification scripts in the `/tools` directory.
+## 🏗️ Technical Overview
 
-## 🤝 Support
-If you enjoy this game, consider supporting the development at [qoneqo.id/support](https://qoneqo.id/support).
+Qoneqo Solitaire uses a specialized engine designed for performance:
+- **Zero-Allocation Render Loop**: Optimized to run at a consistent 60 FPS.
+- **Command Pattern Undo**: Robust unlimited undo capability.
+- **Room Database**: Persistent storage for game statistics.
+- **Adaptive Layout**: Dynamically scales card sizes and spacing to fit everything from small phones to large tablets.
+
+## 📖 Further Reading
+
+For a detailed breakdown of game rules, technical architecture, and internal systems, please refer to the [DOCUMENTATION.md](./DOCUMENTATION.md).
 
 ---
 *Developed by Qoneqo Team. Enjoy the cards!*

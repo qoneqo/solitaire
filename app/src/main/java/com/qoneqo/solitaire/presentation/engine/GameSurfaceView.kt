@@ -310,9 +310,10 @@ class GameSurfaceView @JvmOverloads constructor(
         synchronized(gameStateLock) {
             while (actionQueue.isNotEmpty()) actionQueue.poll()?.invoke()
 
-            val l = layout ?: return
-            val am = assetManager ?: return
-            physics.update(dt, gameState, l, am)
+            val l = layout ?: return@synchronized
+            val am = assetManager ?: return@synchronized
+            
+            physics.update(dt, gameState)
             
             updateParticles(dt)
             if (isWinAnimationActive) updateWinAnimation(dt)
@@ -396,13 +397,8 @@ class GameSurfaceView @JvmOverloads constructor(
     }
 
     private fun isAutoFinishable(): Boolean {
-        if (gameState.stock.isNotEmpty() || gameState.waste.isNotEmpty()) return false
-        for (tableau in gameState.tableaus) {
-            if (tableau.any { !it.isFaceUp }) return false
-        }
         if (isGameFinished || isWinAnimationActive) return false
-        if (gameState.foundations.all { it.size == 13 }) return false
-        return true
+        return SolitaireRules.canAutoComplete(gameState)
     }
 
     private var nextCardToSpawnIdx = 12 // K down to A

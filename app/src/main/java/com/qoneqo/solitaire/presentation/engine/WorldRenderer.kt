@@ -80,9 +80,9 @@ class WorldRenderer(private val am: CardAssetManager) {
         }
         
         // Draw HUD Stacks (Fixed positions)
-        drawStack(canvas, gameState.stock, activeCardStack, selectedStack, hintedCard, 0f)
-        drawStack(canvas, gameState.waste, activeCardStack, selectedStack, hintedCard, 0f)
-        gameState.foundations.forEach { drawStack(canvas, it, activeCardStack, selectedStack, hintedCard, 0f) }
+        drawStack(canvas, gameState.stock, activeCardStack, selectedStack, hintedCard)
+        drawStack(canvas, gameState.waste, activeCardStack, selectedStack, hintedCard)
+        gameState.foundations.forEach { drawStack(canvas, it, activeCardStack, selectedStack, hintedCard) }
         
         // Draw a subtle shadow at the bottom of HUD
         borderPaint.color = Color.BLACK
@@ -147,13 +147,13 @@ class WorldRenderer(private val am: CardAssetManager) {
         }
     }
 
-    private fun drawStack(canvas: Canvas, stack: List<Card>, activeCardStack: List<Card>?, selectedStack: List<Card>?, hintedCard: Card?, offsetY: Float = 0f) {
+    private fun drawStack(canvas: Canvas, stack: List<Card>, activeCardStack: List<Card>?, selectedStack: List<Card>?, hintedCard: Card?) {
         for (card in stack) {
             if (activeCardStack?.contains(card) != true) {
-                canvas.drawBitmap(am.getCardBitmap(card), card.renderX, card.renderY - offsetY, renderPaint)
+                canvas.drawBitmap(am.getCardBitmap(card), card.renderX, card.renderY, renderPaint)
                 
                 if (selectedStack?.contains(card) == true) {
-                    val rect = RectF(card.renderX, card.renderY - offsetY, card.renderX + am.cardWidth, card.renderY - offsetY + am.cardHeight)
+                    val rect = RectF(card.renderX, card.renderY, card.renderX + am.cardWidth, card.renderY + am.cardHeight)
                     highlightPaint.alpha = 200
                     highlightPaint.color = Color.CYAN
                     canvas.drawRoundRect(rect, 10f, 10f, highlightPaint)
@@ -163,7 +163,7 @@ class WorldRenderer(private val am: CardAssetManager) {
                 }
 
                 if (card == hintedCard) {
-                    val rect = RectF(card.renderX, card.renderY - offsetY, card.renderX + am.cardWidth, card.renderY - offsetY + am.cardHeight)
+                    val rect = RectF(card.renderX, card.renderY, card.renderX + am.cardWidth, card.renderY + am.cardHeight)
                     canvas.drawRoundRect(rect, 10f, 10f, highlightPaint)
                 }
             }

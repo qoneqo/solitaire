@@ -109,8 +109,8 @@ class CardAssetManager(private val context: Context, screenWidth: Int, screenHei
         val canvas = Canvas(emptySlotBitmap)
         val paint = Paint(Paint.ANTI_ALIAS_FLAG)
         
-        // Fill background with #c2d0cd
-        paint.color = Color.parseColor("#c2d0cd")
+        // Fill background with GameConfig.EMPTY_SLOT_COLOR
+        paint.color = Color.parseColor(GameConfig.EMPTY_SLOT_COLOR)
         paint.style = Paint.Style.FILL
         val rectF = RectF(0f, 0f, cardWidth, cardHeight)
         canvas.drawRoundRect(rectF, 16f, 16f, paint)

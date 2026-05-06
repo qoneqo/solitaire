@@ -30,6 +30,10 @@ object SolitaireRules {
                 return false
             }
         }
+        
+        // Don't auto-complete if foundations are already full
+        if (gameState.foundations.all { it.size == 13 }) return false
+        
         return true
     }
 }

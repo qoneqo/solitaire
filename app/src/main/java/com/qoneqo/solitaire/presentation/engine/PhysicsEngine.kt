@@ -7,7 +7,7 @@ import kotlin.math.abs
 
 class PhysicsEngine(private val eventListener: GameEventListener?) {
 
-    fun update(dt: Float, gameState: GameState, layout: GameLayout, am: CardAssetManager) {
+    fun update(dt: Float, gameState: GameState) {
         val allCards = sequence {
             yieldAll(gameState.stock)
             yieldAll(gameState.waste)
@@ -15,10 +15,8 @@ class PhysicsEngine(private val eventListener: GameEventListener?) {
             gameState.tableaus.forEach { yieldAll(it) }
         }
 
-        var isAnimating = false
         for (card in allCards) {
             if (card.isSnappingBack) {
-                isAnimating = true
                 card.renderX += (card.originalX - card.renderX) * GameConfig.SNAP_SPEED * dt
                 card.renderY += (card.originalY - card.renderY) * GameConfig.SNAP_SPEED * dt
                 if (abs(card.renderX - card.originalX) < 1f && abs(card.renderY - card.originalY) < 1f) {

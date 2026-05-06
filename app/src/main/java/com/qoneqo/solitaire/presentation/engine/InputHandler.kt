@@ -26,7 +26,6 @@ class InputHandler(
     fun onTouchEvent(event: MotionEvent, gameState: GameState, layout: GameLayout, screenHeight: Float, scrollOffsetY: Float): Boolean {
         val x = event.x
         val y = event.y
-        val hudHeight = layout.tableauY - 20f
 
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
