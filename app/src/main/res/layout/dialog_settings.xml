@@ -28,103 +28,113 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 
-    <LinearLayout
-        android:id="@+id/buttonContainer"
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/settingsScrollView"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="24dp"
+        android:layout_height="0dp"
+        app:layout_constrainedHeight="true"
         app:layout_constraintTop_toBottomOf="@id/titleBg"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHeight_max="450dp"
+        app:layout_constraintHeight_default="wrap">
 
-        <Button
-            android:id="@+id/btnNewGame"
-            style="@style/Widget.Material3.Button.TonalButton"
+        <LinearLayout
+            android:id="@+id/buttonContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="New Game"
-            android:backgroundTint="#c2d0cd"
-            android:textColor="#2d3436"
-            android:layout_marginBottom="8dp"
-            android:textAllCaps="false"/>
+            android:orientation="vertical"
+            android:padding="24dp">
 
-        <Button
-            android:id="@+id/btnHighScore"
-            style="@style/Widget.Material3.Button.TonalButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="High Score"
-            android:backgroundTint="#c2d0cd"
-            android:textColor="#2d3436"
-            android:layout_marginBottom="8dp"
-            android:textAllCaps="false"/>
+            <Button
+                android:id="@+id/btnNewGame"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="New Game"
+                android:backgroundTint="#c2d0cd"
+                android:textColor="#2d3436"
+                android:layout_marginBottom="8dp"
+                android:textAllCaps="false"/>
 
-        <Button
-            android:id="@+id/btnChangeColor"
-            style="@style/Widget.Material3.Button.TonalButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Customize Table Color"
-            android:backgroundTint="#c2d0cd"
-            android:textColor="#2d3436"
-            android:layout_marginBottom="8dp"
-            android:textAllCaps="false"/>
+            <Button
+                android:id="@+id/btnHighScore"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="High Score"
+                android:backgroundTint="#c2d0cd"
+                android:textColor="#2d3436"
+                android:layout_marginBottom="8dp"
+                android:textAllCaps="false"/>
 
-        <Button
-            android:id="@+id/btnAutoSolve"
-            style="@style/Widget.Material3.Button.TonalButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Auto Solve: OFF"
-            android:backgroundTint="#c2d0cd"
-            android:textColor="#2d3436"
-            android:layout_marginBottom="8dp"
-            android:textAllCaps="false"/>
+            <Button
+                android:id="@+id/btnChangeColor"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Customize Table Color"
+                android:backgroundTint="#c2d0cd"
+                android:textColor="#2d3436"
+                android:layout_marginBottom="8dp"
+                android:textAllCaps="false"/>
 
-        <Button
-            android:id="@+id/btnSound"
-            style="@style/Widget.Material3.Button.TonalButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Sound FX: ON"
-            android:backgroundTint="#c2d0cd"
-            android:textColor="#2d3436"
-            android:layout_marginBottom="8dp"
-            android:textAllCaps="false"/>
+            <Button
+                android:id="@+id/btnAutoSolve"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Auto Solve: OFF"
+                android:backgroundTint="#c2d0cd"
+                android:textColor="#2d3436"
+                android:layout_marginBottom="8dp"
+                android:textAllCaps="false"/>
 
-        <Button
-            android:id="@+id/btnMusic"
-            style="@style/Widget.Material3.Button.TonalButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Ambient Music: ON"
-            android:backgroundTint="#c2d0cd"
-            android:textColor="#2d3436"
-            android:layout_marginBottom="8dp"
-            android:textAllCaps="false"/>
+            <Button
+                android:id="@+id/btnSound"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Sound FX: ON"
+                android:backgroundTint="#c2d0cd"
+                android:textColor="#2d3436"
+                android:layout_marginBottom="8dp"
+                android:textAllCaps="false"/>
 
-        <Button
-            android:id="@+id/btnDonate"
-            style="@style/Widget.Material3.Button.TonalButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Support Developer ☕"
-            android:backgroundTint="#27ae60"
-            android:textColor="#FFFFFF"
-            android:layout_marginBottom="16dp"
-            android:textAllCaps="false"/>
+            <Button
+                android:id="@+id/btnMusic"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Ambient Music: ON"
+                android:backgroundTint="#c2d0cd"
+                android:textColor="#2d3436"
+                android:layout_marginBottom="8dp"
+                android:textAllCaps="false"/>
 
-        <Button
-            android:id="@+id/btnExit"
-            style="@style/Widget.Material3.Button.TonalButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Exit Game 😢"
-            android:backgroundTint="#d63031"
-            android:textColor="#FFFFFF"
-            android:textAllCaps="false"/>
+            <Button
+                android:id="@+id/btnDonate"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Support Developer ☕"
+                android:backgroundTint="#27ae60"
+                android:textColor="#FFFFFF"
+                android:layout_marginBottom="16dp"
+                android:textAllCaps="false"/>
 
-    </LinearLayout>
+            <Button
+                android:id="@+id/btnExit"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Exit Game 😢"
+                android:backgroundTint="#d63031"
+                android:textColor="#FFFFFF"
+                android:textAllCaps="false"/>
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
