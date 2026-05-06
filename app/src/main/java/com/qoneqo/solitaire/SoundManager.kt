@@ -52,8 +52,8 @@ class SoundManager(private val context: Context) {
 
         val poolId = soundMap[soundResId]
         if (poolId != null) {
-            // Volume set to 0.8f to avoid clipping when many sounds play
-            soundPool.play(poolId, 0.8f, 0.8f, 1, 0, 1.0f)
+            // Volume set to 1.0f for normal clear sound
+            soundPool.play(poolId, 1.0f, 1.0f, 1, 0, 1.0f)
         } else {
             // If not preloaded (e.g. newly added), load it for future use
             val id = soundPool.load(context, soundResId, 1)
@@ -75,7 +75,7 @@ class SoundManager(private val context: Context) {
             mediaPlayer = MediaPlayer.create(context, R.raw.ambient_music)
             mediaPlayer?.apply {
                 isLooping = true
-                val vol = 0.12f // Kembali ke volume original yang "Cozy"
+                val vol = 0.5f // Set to normal volume (0.5f)
                 setVolume(vol, vol)
                 start()
             }
