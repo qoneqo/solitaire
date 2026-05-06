@@ -137,7 +137,28 @@ class InputHandler(
             }
         }
 
-        // 3. Waste
+        // 3. Foundation
+        for (i in 0 until 4) {
+            val pile = gameState.foundations[i]
+            if (pile.isNotEmpty()) {
+                val card = pile.last()
+                if (x >= layout.foundationX[i] && x <= layout.foundationX[i] + am.cardWidth &&
+                    y >= layout.foundationY && y <= layout.foundationY + am.cardHeight) {
+                    
+                    activeCardStack = listOf(card)
+                    sourcePileType = 1
+                    sourcePileIndex = i
+                    
+                    card.originalX = card.renderX
+                    card.originalY = card.renderY
+                    card.touchOffsetX = x - card.renderX
+                    card.touchOffsetY = y - card.renderY
+                    return true
+                }
+            }
+        }
+
+        // 4. Waste
         if (gameState.waste.isNotEmpty()) {
             val card = gameState.waste.last()
             if (x >= layout.wasteX && x <= layout.wasteX + am.cardWidth && y >= layout.wasteY && y <= layout.wasteY + am.cardHeight) {
@@ -310,7 +331,11 @@ class InputHandler(
 
             gameState.moves++
             if (toType == 1) gameState.score += GameConfig.SCORE_FOUNDATION
-            else if (fromType != 2 && toType == 2) gameState.score += GameConfig.SCORE_TABLEAU
+            else if (fromType != 2 && toType == 2 && fromType != 1) gameState.score += GameConfig.SCORE_TABLEAU
+            else if (fromType == 1 && toType == 2) {
+                gameState.score += GameConfig.PENALTY_FOUNDATION_TO_TABLEAU
+                if (gameState.score < 0) gameState.score = 0
+            }
 
             eventListener?.playSound(com.qoneqo.solitaire.R.raw.card_place)
             eventListener?.onMovesChanged(gameState.moves)

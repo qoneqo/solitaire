@@ -22,4 +22,5 @@ object GameConfig {
     // Gameplay
     const val SCORE_FOUNDATION = 10
     const val SCORE_TABLEAU = 5
+    const val PENALTY_FOUNDATION_TO_TABLEAU = -15
 }
