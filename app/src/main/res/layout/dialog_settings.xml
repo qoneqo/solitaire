@@ -1,95 +1,130 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:orientation="vertical"
-    android:background="#9fb5b0"
-    android:padding="24dp">
+    android:background="#BF9fb5b0"
+    android:padding="0dp">
+
+    <View
+        android:id="@+id/titleBg"
+        android:layout_width="0dp"
+        android:layout_height="60dp"
+        android:background="#33000000"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <TextView
-        android:layout_width="match_parent"
+        android:id="@+id/dialogTitle"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="SETTINGS"
-        android:textColor="#2d3436"
-        android:textSize="22sp"
+        android:textColor="#FFFFFF"
+        android:textSize="20sp"
         android:textStyle="bold"
-        android:gravity="center"
-        android:layout_marginBottom="24dp"/>
+        app:layout_constraintTop_toTopOf="@id/titleBg"
+        app:layout_constraintBottom_toBottomOf="@id/titleBg"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
 
-    <Button
-        android:id="@+id/btnNewGame"
-        style="@style/Widget.Material3.Button.TonalButton"
-        android:layout_width="match_parent"
+    <LinearLayout
+        android:id="@+id/buttonContainer"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="New Game"
-        android:backgroundTint="#c2d0cd"
-        android:textColor="#2d3436"
-        android:layout_marginBottom="8dp"
-        android:textAllCaps="false"/>
+        android:orientation="vertical"
+        android:padding="24dp"
+        app:layout_constraintTop_toBottomOf="@id/titleBg"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
 
-    <Button
-        android:id="@+id/btnAutoSolve"
-        style="@style/Widget.Material3.Button.TonalButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Auto Solve: OFF"
-        android:backgroundTint="#c2d0cd"
-        android:textColor="#2d3436"
-        android:layout_marginBottom="8dp"
-        android:textAllCaps="false"/>
+        <Button
+            android:id="@+id/btnNewGame"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="New Game"
+            android:backgroundTint="#c2d0cd"
+            android:textColor="#2d3436"
+            android:layout_marginBottom="8dp"
+            android:textAllCaps="false"/>
 
-    <Button
-        android:id="@+id/btnSound"
-        style="@style/Widget.Material3.Button.TonalButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Sound FX: ON"
-        android:backgroundTint="#c2d0cd"
-        android:textColor="#2d3436"
-        android:layout_marginBottom="8dp"
-        android:textAllCaps="false"/>
+        <Button
+            android:id="@+id/btnHighScore"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="High Score"
+            android:backgroundTint="#c2d0cd"
+            android:textColor="#2d3436"
+            android:layout_marginBottom="8dp"
+            android:textAllCaps="false"/>
 
-    <Button
-        android:id="@+id/btnMusic"
-        style="@style/Widget.Material3.Button.TonalButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Ambient Music: ON"
-        android:backgroundTint="#c2d0cd"
-        android:textColor="#2d3436"
-        android:layout_marginBottom="8dp"
-        android:textAllCaps="false"/>
+        <Button
+            android:id="@+id/btnChangeColor"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Customize Table Color"
+            android:backgroundTint="#c2d0cd"
+            android:textColor="#2d3436"
+            android:layout_marginBottom="8dp"
+            android:textAllCaps="false"/>
 
-    <Button
-        android:id="@+id/btnHighScore"
-        style="@style/Widget.Material3.Button.TonalButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="High Score"
-        android:backgroundTint="#c2d0cd"
-        android:textColor="#2d3436"
-        android:layout_marginBottom="8dp"
-        android:textAllCaps="false"/>
+        <Button
+            android:id="@+id/btnAutoSolve"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Auto Solve: OFF"
+            android:backgroundTint="#c2d0cd"
+            android:textColor="#2d3436"
+            android:layout_marginBottom="8dp"
+            android:textAllCaps="false"/>
 
-    <Button
-        android:id="@+id/btnDonate"
-        style="@style/Widget.Material3.Button.TonalButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Support Development"
-        android:backgroundTint="#c2d0cd"
-        android:textColor="#2d3436"
-        android:layout_marginBottom="8dp"
-        android:textAllCaps="false"/>
+        <Button
+            android:id="@+id/btnSound"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Sound FX: ON"
+            android:backgroundTint="#c2d0cd"
+            android:textColor="#2d3436"
+            android:layout_marginBottom="8dp"
+            android:textAllCaps="false"/>
 
-    <Button
-        android:id="@+id/btnExit"
-        style="@style/Widget.Material3.Button.TextButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Exit Game"
-        android:textColor="#d63031"
-        android:textAllCaps="false"/>
+        <Button
+            android:id="@+id/btnMusic"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Ambient Music: ON"
+            android:backgroundTint="#c2d0cd"
+            android:textColor="#2d3436"
+            android:layout_marginBottom="8dp"
+            android:textAllCaps="false"/>
 
-</LinearLayout>
+        <Button
+            android:id="@+id/btnDonate"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Support Developer ☕"
+            android:backgroundTint="#27ae60"
+            android:textColor="#FFFFFF"
+            android:layout_marginBottom="16dp"
+            android:textAllCaps="false"/>
+
+        <Button
+            android:id="@+id/btnExit"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Exit Game 😢"
+            android:backgroundTint="#d63031"
+            android:textColor="#FFFFFF"
+            android:textAllCaps="false"/>
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -20,6 +20,9 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import android.view.LayoutInflater
 import com.qoneqo.solitaire.presentation.HighScoreAdapter
+import com.qoneqo.solitaire.presentation.TableColorAdapter
+import com.qoneqo.solitaire.presentation.engine.GameConfig
+import androidx.recyclerview.widget.GridLayoutManager
 
 class MainActivity : AppCompatActivity(), GameEventListener {
 
@@ -36,6 +39,10 @@ class MainActivity : AppCompatActivity(), GameEventListener {
         soundManager = SoundManager(this)
 
         gameSurfaceView = findViewById(R.id.gameSurfaceView)
+        val savedBgColor = getSharedPreferences("settings", MODE_PRIVATE).getString("bg_color", GameConfig.BACKGROUND_COLOR)
+        val colorInt = android.graphics.Color.parseColor(savedBgColor)
+        gameSurfaceView.tableColor = colorInt
+        findViewById<android.view.View>(R.id.mainLayout).setBackgroundColor(colorInt)
         scoreText = findViewById(R.id.scoreText)
         movesText = findViewById(R.id.movesText)
         timerText = findViewById(R.id.timerText)
@@ -204,6 +211,18 @@ class MainActivity : AppCompatActivity(), GameEventListener {
         val dialog = AlertDialog.Builder(this, R.style.CozyDialogTheme)
             .setView(dialogView)
             .create()
+        
+        viewModel.stopTimer()
+        dialog.setOnDismissListener {
+            viewModel.startTimer()
+        }
+        
+        val currentColorStr = getSharedPreferences("settings", MODE_PRIVATE).getString("bg_color", GameConfig.BACKGROUND_COLOR) ?: GameConfig.BACKGROUND_COLOR
+        val alphaColor = if (currentColorStr.length == 7 && currentColorStr.startsWith("#")) {
+            android.graphics.Color.parseColor("#BF" + currentColorStr.substring(1))
+        } else gameSurfaceView.tableColor
+        
+        dialogView.setBackgroundColor(alphaColor)
 
         btnNewGame.setOnClickListener {
             dialog.dismiss()
@@ -248,13 +267,25 @@ class MainActivity : AppCompatActivity(), GameEventListener {
                     val hsDialog = AlertDialog.Builder(this@MainActivity, R.style.CozyDialogTheme)
                         .setView(hsView)
                         .create()
-
+                    
+                    hsView.setBackgroundColor(alphaColor)
+                    
+                    viewModel.stopTimer()
                     closeButton.setOnClickListener { hsDialog.dismiss() }
+                    hsDialog.setOnDismissListener {
+                        viewModel.startTimer()
+                    }
                     hsDialog.show()
+                    
                     val width = (resources.displayMetrics.widthPixels * 0.90).toInt()
                     hsDialog.window?.setLayout(width, ViewGroup.LayoutParams.WRAP_CONTENT)
                 }
             }
+        }
+
+        // Background Color Selection
+        dialogView.findViewById<Button>(R.id.btnChangeColor).setOnClickListener {
+            showColorPickerModal(dialogView)
         }
 
         btnDonate.setOnClickListener {
@@ -267,8 +298,64 @@ class MainActivity : AppCompatActivity(), GameEventListener {
         }
 
         dialog.show()
+        
         val width = (resources.displayMetrics.widthPixels * 0.85).toInt()
         dialog.window?.setLayout(width, ViewGroup.LayoutParams.WRAP_CONTENT)
+    }
+
+    private fun updateTableColor(colorStr: String, viewToUpdate: android.view.View? = null) {
+        val color = android.graphics.Color.parseColor(colorStr)
+        gameSurfaceView.tableColor = color
+        
+        // Use 75% alpha for dialog backgrounds
+        val alphaColor = if (colorStr.length == 7 && colorStr.startsWith("#")) {
+            android.graphics.Color.parseColor("#BF" + colorStr.substring(1))
+        } else color
+        
+        viewToUpdate?.setBackgroundColor(alphaColor)
+        findViewById<android.view.View>(R.id.mainLayout).setBackgroundColor(color)
+        getSharedPreferences("settings", MODE_PRIVATE).edit().putString("bg_color", colorStr).apply()
+    }
+
+    private fun showColorPickerModal(settingsDialogView: android.view.View) {
+        val colorPickerView = LayoutInflater.from(this).inflate(R.layout.dialog_color_picker, null)
+        val recyclerView = colorPickerView.findViewById<RecyclerView>(R.id.colorRecyclerView)
+        val btnCancel = colorPickerView.findViewById<Button>(R.id.btnCancel)
+        val root = colorPickerView.findViewById<android.view.View>(R.id.colorPickerRoot)
+
+        val colors = listOf(
+            "#9fb5b0", "#94a6c2", "#b09fb5", "#b5a89f",
+            "#2d3436", "#27ae60", "#2c3e50", "#c0392b",
+            "#e67e22", "#fab1a0", "#55efc4", "#a29bfe",
+            "#74b9ff", "#ffeaa7", "#556b2f", "#483d8b"
+        )
+
+        val cpDialog = AlertDialog.Builder(this, R.style.CozyDialogTheme)
+            .setView(colorPickerView)
+            .create()
+
+        val currentColorStr = getSharedPreferences("settings", MODE_PRIVATE).getString("bg_color", GameConfig.BACKGROUND_COLOR) ?: GameConfig.BACKGROUND_COLOR
+        val alphaColor = if (currentColorStr.length == 7 && currentColorStr.startsWith("#")) {
+            android.graphics.Color.parseColor("#BF" + currentColorStr.substring(1))
+        } else gameSurfaceView.tableColor
+
+        root.setBackgroundColor(alphaColor)
+
+        recyclerView.layoutManager = GridLayoutManager(this, 4)
+        recyclerView.adapter = TableColorAdapter(colors) { selectedColor ->
+            updateTableColor(selectedColor, settingsDialogView)
+            val newAlphaColor = if (selectedColor.length == 7 && selectedColor.startsWith("#")) {
+                android.graphics.Color.parseColor("#BF" + selectedColor.substring(1))
+            } else android.graphics.Color.parseColor(selectedColor)
+            root.setBackgroundColor(newAlphaColor)
+            cpDialog.dismiss()
+        }
+
+        btnCancel.setOnClickListener { cpDialog.dismiss() }
+        cpDialog.show()
+
+        val width = (resources.displayMetrics.widthPixels * 0.90).toInt()
+        cpDialog.window?.setLayout(width, ViewGroup.LayoutParams.WRAP_CONTENT)
     }
 
     override fun playSound(soundResId: Int) {

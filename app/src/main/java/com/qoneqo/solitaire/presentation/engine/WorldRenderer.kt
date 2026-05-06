@@ -38,9 +38,10 @@ class WorldRenderer(private val am: CardAssetManager) {
         hintedTargetX: Float = 0f,
         hintedTargetY: Float = 0f,
         particles: List<Particle> = emptyList(),
-        cascadingCards: List<CascadingCard> = emptyList()
+        cascadingCards: List<CascadingCard> = emptyList(),
+        tableColor: Int? = null
     ) {
-        canvas.drawColor(Color.parseColor(GameConfig.BACKGROUND_COLOR))
+        canvas.drawColor(tableColor ?: Color.parseColor(GameConfig.BACKGROUND_COLOR))
 
         // 1. Draw empty slots and tableau borders
         canvas.drawBitmap(am.emptySlotBitmap, Math.round(layout.stockX).toFloat(), Math.round(layout.stockY).toFloat(), renderPaint)

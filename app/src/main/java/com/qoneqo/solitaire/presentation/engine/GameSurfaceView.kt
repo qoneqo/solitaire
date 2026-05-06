@@ -55,6 +55,7 @@ class GameSurfaceView @JvmOverloads constructor(
     private val cascadingCards = mutableListOf<CascadingCard>()
     private var isWinAnimationActive = false
     private var cascadeTimer = 0f
+    var tableColor: Int = android.graphics.Color.parseColor(GameConfig.BACKGROUND_COLOR)
 
     fun getCurrentLogbookId(): Int = currentLogbookEntry?.id ?: -1
 
@@ -618,7 +619,7 @@ class GameSurfaceView @JvmOverloads constructor(
     fun render(canvas: Canvas) {
         val l = layout ?: return
         val am = assetManager ?: return
-        renderer.render(canvas, gameState, l, inputHandler.activeCardStack, inputHandler.selectedStack, hintedCard, hintTimer, hintedSourceX, hintedSourceY, hintedTargetX, hintedTargetY, particles, cascadingCards)
+        renderer.render(canvas, gameState, l, inputHandler.activeCardStack, inputHandler.selectedStack, hintedCard, hintTimer, hintedSourceX, hintedSourceY, hintedTargetX, hintedTargetY, particles, cascadingCards, tableColor)
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
