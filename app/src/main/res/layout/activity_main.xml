@@ -126,56 +126,74 @@
         </LinearLayout>
     </LinearLayout>
 
-    <!-- Floating Action Buttons -->
+    <!-- Main Floating Action Buttons Row (Bottom) -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/newGameButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:src="@android:drawable/ic_menu_add"
+        android:soundEffectsEnabled="false"
+        app:backgroundTint="#c2d0cd"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/undoButton"
+        app:layout_constraintHorizontal_chainStyle="spread"
+        app:layout_constraintStart_toStartOf="parent"
+        app:tint="#2d3436" />
+
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/undoButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="24dp"
+        android:layout_margin="16dp"
         android:src="@android:drawable/ic_menu_revert"
         android:soundEffectsEnabled="false"
         app:backgroundTint="#c2d0cd"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/hintButton"
+        app:layout_constraintStart_toEndOf="@+id/newGameButton"
         app:tint="#2d3436" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/hintButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="24dp"
+        android:layout_margin="16dp"
         android:src="@android:drawable/ic_menu_help"
         android:soundEffectsEnabled="false"
         app:backgroundTint="#c2d0cd"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/settingsButton"
-        app:layout_constraintStart_toEndOf="@id/undoButton"
-        app:tint="#2d3436" />
-
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/autoFinishButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="24dp"
-        android:src="@android:drawable/ic_media_ff"
-        android:soundEffectsEnabled="false"
-        android:visibility="gone"
-        app:backgroundTint="#FFD700"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/settingsButton"
-        app:layout_constraintStart_toEndOf="@id/undoButton"
+        app:layout_constraintEnd_toStartOf="@+id/settingsButton"
+        app:layout_constraintStart_toEndOf="@+id/undoButton"
         app:tint="#2d3436" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/settingsButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="24dp"
+        android:layout_margin="16dp"
         android:src="@android:drawable/ic_menu_manage"
         android:soundEffectsEnabled="false"
         app:backgroundTint="#c2d0cd"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/hintButton"
         app:tint="#2d3436" />
+
+    <!-- Auto-Complete Button (Above the main row) -->
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+        android:id="@+id/autoFinishButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:text="Auto Finish"
+        android:textColor="#2d3436"
+        android:visibility="gone"
+        app:backgroundTint="#FFD700"
+        app:icon="@android:drawable/btn_star_big_on"
+        app:iconTint="#2d3436"
+        app:layout_constraintBottom_toTopOf="@+id/hintButton"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

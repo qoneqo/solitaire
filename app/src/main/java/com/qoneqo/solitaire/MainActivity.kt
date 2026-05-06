@@ -50,6 +50,14 @@ class MainActivity : AppCompatActivity(), GameEventListener {
             gameSurfaceView.initEngine()
         }
 
+        // New Game Button
+        findViewById<android.view.View>(R.id.newGameButton).setOnClickListener {
+            playSound(R.raw.card_place)
+            viewModel.resetGame()
+            resetButtons()
+            gameSurfaceView.setupNewGame()
+        }
+
         // Settings Button replaced New Game Button
         findViewById<android.view.View>(R.id.settingsButton).setOnClickListener {
             playSound(R.raw.card_place)
@@ -58,6 +66,7 @@ class MainActivity : AppCompatActivity(), GameEventListener {
 
         findViewById<android.view.View>(R.id.undoButton).setOnClickListener {
             playSound(R.raw.card_place)
+            resetButtons()
             gameSurfaceView.undo()
         }
 
@@ -269,10 +278,8 @@ class MainActivity : AppCompatActivity(), GameEventListener {
 
     override fun onAutoFinishAvailable() {
         runOnUiThread {
-            val hintButton = findViewById<android.view.View>(R.id.hintButton)
             val autoFinishButton = findViewById<android.view.View>(R.id.autoFinishButton)
             if (autoFinishButton.visibility != android.view.View.VISIBLE) {
-                hintButton.visibility = android.view.View.GONE
                 autoFinishButton.visibility = android.view.View.VISIBLE
             }
         }

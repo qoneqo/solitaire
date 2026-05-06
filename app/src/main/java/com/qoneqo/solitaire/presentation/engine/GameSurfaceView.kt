@@ -38,6 +38,7 @@ class GameSurfaceView @JvmOverloads constructor(
     private var logbookStepIndex: Int = 0
     private var isGameFinished: Boolean = false
     private var isFastForwarding: Boolean = false
+    private var isAutoFinishButtonNotified: Boolean = false
 
     // Visual Effects
     private val moveHistory = LinkedList<LogbookMove>()
@@ -100,6 +101,7 @@ class GameSurfaceView @JvmOverloads constructor(
             particles.clear()
             cascadingCards.clear()
             isWinAnimationActive = false
+            isAutoFinishButtonNotified = false
             updateCardPositions()
         }
     }
@@ -111,6 +113,7 @@ class GameSurfaceView @JvmOverloads constructor(
 
     fun undo() {
         runOnGameThread {
+            isAutoFinishButtonNotified = false // Allow button to re-appear after undo
             if (gameState.undoStack.isNotEmpty()) {
                 val command = gameState.undoStack.removeAt(gameState.undoStack.size - 1)
                 command.undo(gameState)
@@ -316,14 +319,15 @@ class GameSurfaceView @JvmOverloads constructor(
 
             if (isAutoSolving) {
                 solverTimer += dt
-                val delay = if (isFastForwarding) 0.05f else 0.3f
+                val delay = 0.3f
                 if (solverTimer >= delay) {
                     solverTimer = 0f
                     performSolverMove()
                 }
             }
             
-            if (!isFastForwarding && isAutoFinishable()) {
+            if (!isFastForwarding && !isAutoFinishButtonNotified && isAutoFinishable()) {
+                isAutoFinishButtonNotified = true
                 gameEventListener?.onAutoFinishAvailable()
             }
             
