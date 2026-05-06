@@ -185,6 +185,7 @@ class MainActivity : AppCompatActivity(), GameEventListener {
         btnAutoSolve.setOnClickListener {
             gameSurfaceView.isAutoSolving = !gameSurfaceView.isAutoSolving
             btnAutoSolve.text = "Auto Solve: ${if (gameSurfaceView.isAutoSolving) "ON" else "OFF"}"
+            dialog.dismiss()
         }
 
         btnSound.setOnClickListener {
