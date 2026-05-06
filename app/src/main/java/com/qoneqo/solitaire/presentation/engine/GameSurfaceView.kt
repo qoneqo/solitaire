@@ -367,7 +367,7 @@ class GameSurfaceView @JvmOverloads constructor(
                 c.y = h - am.cardHeight
                 c.vy = -c.vy * 0.7f // Bounce
                 if (Math.abs(c.vy) > 100f) {
-                    gameEventListener?.playSound(com.qoneqo.solitaire.R.raw.card_deal)
+                    gameEventListener?.playSound(com.qoneqo.solitaire.R.raw.bubble_pop)
                 }
             }
 
@@ -424,7 +424,7 @@ class GameSurfaceView @JvmOverloads constructor(
                     suit = card.suit,
                     rank = card.rank
                 ))
-                gameEventListener?.playSound(com.qoneqo.solitaire.R.raw.card_place)
+                gameEventListener?.playSound(com.qoneqo.solitaire.R.raw.sparkle)
                 found = true
                 break
             }
@@ -523,7 +523,7 @@ class GameSurfaceView @JvmOverloads constructor(
                 gameState.waste.add(card)
                 gameState.undoStack.add(GameCommand.DealStock(1))
                 gameState.moves++
-                gameEventListener?.playSound(com.qoneqo.solitaire.R.raw.card_deal)
+                gameEventListener?.playSound(com.qoneqo.solitaire.R.raw.bubble_pop)
                 gameEventListener?.onMovesChanged(gameState.moves)
             }
             "RECYCLE_WASTE" -> {
@@ -540,7 +540,10 @@ class GameSurfaceView @JvmOverloads constructor(
             "TO_FOUNDATION" -> {
                 val fromPile = if (move.fromType == 0) gameState.waste else gameState.tableaus[move.fromIdx]
                 val card = fromPile.removeAt(fromPile.size - 1)
-                if (move.fromType == 2 && fromPile.isNotEmpty() && !fromPile.last().isFaceUp) fromPile.last().isFaceUp = true
+                if (move.fromType == 2 && fromPile.isNotEmpty() && !fromPile.last().isFaceUp) {
+                    fromPile.last().isFaceUp = true
+                    gameEventListener?.playSound(com.qoneqo.solitaire.R.raw.bubble_pop)
+                }
                 gameState.foundations[move.toIdx].add(card)
                 card.originalX = l.foundationX[move.toIdx]
                 card.originalY = l.foundationY
@@ -548,7 +551,7 @@ class GameSurfaceView @JvmOverloads constructor(
                 gameState.undoStack.add(GameCommand.MoveCards(listOf(0), move.fromType, move.fromIdx, 1, move.toIdx, false))
                 gameState.score += GameConfig.SCORE_FOUNDATION
                 gameState.moves++
-                gameEventListener?.playSound(com.qoneqo.solitaire.R.raw.card_place)
+                gameEventListener?.playSound(com.qoneqo.solitaire.R.raw.sparkle)
                 gameEventListener?.onScoreChanged(gameState.score)
                 gameEventListener?.onMovesChanged(gameState.moves)
                 emitParticles(l.foundationX[move.toIdx] + am.cardWidth / 2f, l.foundationY + am.cardHeight / 2f, Color.YELLOW)
@@ -558,7 +561,10 @@ class GameSurfaceView @JvmOverloads constructor(
                 val stack = fromPile.subList(fromPile.size - move.cardCount, fromPile.size).toList()
                 val wasFaceDown = move.fromType == 2 && fromPile.size > stack.size && !fromPile[fromPile.size - stack.size - 1].isFaceUp
                 repeat(stack.size) { fromPile.removeAt(fromPile.size - 1) }
-                if (move.fromType == 2 && fromPile.isNotEmpty() && !fromPile.last().isFaceUp) fromPile.last().isFaceUp = true
+                if (move.fromType == 2 && fromPile.isNotEmpty() && !fromPile.last().isFaceUp) {
+                    fromPile.last().isFaceUp = true
+                    gameEventListener?.playSound(com.qoneqo.solitaire.R.raw.bubble_pop)
+                }
                 val toPile = gameState.tableaus[move.toIdx]
                 toPile.addAll(stack)
                 stack.forEachIndexed { index, c ->
@@ -568,7 +574,7 @@ class GameSurfaceView @JvmOverloads constructor(
                 }
                 gameState.undoStack.add(GameCommand.MoveCards(List(stack.size) { it }, move.fromType, move.fromIdx, 2, move.toIdx, wasFaceDown))
                 gameState.moves++
-                gameEventListener?.playSound(com.qoneqo.solitaire.R.raw.card_place)
+                gameEventListener?.playSound(com.qoneqo.solitaire.R.raw.pop)
                 gameEventListener?.onMovesChanged(gameState.moves)
                 emitParticles(l.tableauX[move.toIdx] + am.cardWidth / 2f, l.tableauY + (toPile.size - 1) * am.verticalOffset + am.cardHeight / 2f, Color.WHITE)
             }
@@ -589,7 +595,7 @@ class GameSurfaceView @JvmOverloads constructor(
             if (m1 == m3 && m2 == m4
                 && m1.type == "TO_TABLEAU" && m2.type == "TO_TABLEAU"
                 && m1.fromIdx == m2.toIdx && m1.toIdx == m2.fromIdx) {
-                stuck("Bot Terjebak! Loop terdeteksi. Silakan gerakkan kartu manual atau mulai game baru.")
+                stuck("Bot is stuck! Loop detected. Please move the card manually or start a new game.")
                 return
             }
         }
@@ -598,7 +604,7 @@ class GameSurfaceView @JvmOverloads constructor(
         when (move.type) {
             "RECYCLE_WASTE" -> {
                 recycleCount++
-                if (recycleCount >= 3) stuck("Bot Terjebak! Tidak ada kartu berguna di deck. Silakan gerakkan kartu manual atau mulai game baru.")
+                if (recycleCount >= 3) stuck("Bot is stuck! No useful cards in the deck. Please move the card manually or start a new game.")
             }
             "TO_FOUNDATION" -> recycleCount = 0 // Real progress, reset cycle counter
         }

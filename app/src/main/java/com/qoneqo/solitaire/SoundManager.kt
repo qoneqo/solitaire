@@ -5,6 +5,7 @@ import android.media.AudioAttributes
 import android.media.SoundPool
 import android.content.SharedPreferences
 import android.media.MediaPlayer
+import android.util.Log
 
 class SoundManager(private val context: Context) {
     private val prefs: SharedPreferences = context.getSharedPreferences("solitaire_prefs", Context.MODE_PRIVATE)
@@ -12,7 +13,7 @@ class SoundManager(private val context: Context) {
     private var musicEnabled = prefs.getBoolean("music_enabled", true)
     
     private val soundPool: SoundPool = SoundPool.Builder()
-        .setMaxStreams(5)
+        .setMaxStreams(8) // Increased for overlapping card sounds
         .setAudioAttributes(
             AudioAttributes.Builder()
                 .setUsage(AudioAttributes.USAGE_GAME)
@@ -25,45 +26,71 @@ class SoundManager(private val context: Context) {
     private var mediaPlayer: MediaPlayer? = null
 
     init {
+        preloadSounds()
         if (musicEnabled) {
             startMusic()
+        }
+    }
+
+    private fun preloadSounds() {
+        val soundResIds = listOf(
+            R.raw.bubble_pop,
+            R.raw.pop,
+            R.raw.tapping_glass,
+            R.raw.sparkle,
+            R.raw.win_sound,
+            R.raw.lose_sound
+        )
+        for (resId in soundResIds) {
+            val id = soundPool.load(context, resId, 1)
+            soundMap[resId] = id
         }
     }
 
     fun playSound(soundResId: Int) {
         if (!soundEnabled) return
 
-        if (soundMap.containsKey(soundResId)) {
-            soundPool.play(soundMap[soundResId]!!, 1.0f, 1.0f, 1, 0, 1.0f)
+        val poolId = soundMap[soundResId]
+        if (poolId != null) {
+            // Volume set to 0.8f to avoid clipping when many sounds play
+            soundPool.play(poolId, 0.8f, 0.8f, 1, 0, 1.0f)
         } else {
+            // If not preloaded (e.g. newly added), load it for future use
             val id = soundPool.load(context, soundResId, 1)
             soundMap[soundResId] = id
-            soundPool.setOnLoadCompleteListener { sp, loadedId, status ->
-                if (status == 0 && loadedId == id) {
-                    sp.play(loadedId, 1.0f, 1.0f, 1, 0, 1.0f)
-                }
-            }
         }
     }
 
     private fun startMusic() {
-        try {
-            if (mediaPlayer == null) {
-                mediaPlayer = MediaPlayer.create(context, R.raw.ambient_music)
-                mediaPlayer?.isLooping = true
-                mediaPlayer?.setVolume(0.15f, 0.15f) // Very low volume for lo-fi feel
+        if (!musicEnabled) return
+
+        if (mediaPlayer != null) {
+            if (!mediaPlayer!!.isPlaying) {
+                mediaPlayer?.start()
             }
-            mediaPlayer?.start()
+            return
+        }
+        
+        try {
+            mediaPlayer = MediaPlayer.create(context, R.raw.ambient_music)
+            mediaPlayer?.apply {
+                isLooping = true
+                val vol = 0.12f // Kembali ke volume original yang "Cozy"
+                setVolume(vol, vol)
+                start()
+            }
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e("SoundManager", "Error starting ambient music", e)
         }
     }
 
     private fun stopMusic() {
+        Log.d("SoundManager", "Stopping music.")
         mediaPlayer?.pause()
     }
 
     fun setMusicEnabled(enabled: Boolean) {
+        Log.d("SoundManager", "setMusicEnabled: $enabled")
         musicEnabled = enabled
         prefs.edit().putBoolean("music_enabled", enabled).apply()
         if (enabled) {
@@ -76,11 +103,15 @@ class SoundManager(private val context: Context) {
     fun isMusicEnabled(): Boolean = musicEnabled
 
     fun release() {
-        soundPool.release()
-        soundMap.clear()
-        mediaPlayer?.stop()
-        mediaPlayer?.release()
-        mediaPlayer = null
+        try {
+            soundPool.release()
+            soundMap.clear()
+            mediaPlayer?.stop()
+            mediaPlayer?.release()
+            mediaPlayer = null
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     fun setSoundEnabled(enabled: Boolean) {

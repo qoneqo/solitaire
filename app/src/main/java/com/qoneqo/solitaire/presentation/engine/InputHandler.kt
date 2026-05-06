@@ -105,7 +105,7 @@ class InputHandler(
                     gameState.undoStack.add(GameCommand.RecycleWaste(count))
                 }
                 gameState.moves++
-                eventListener?.playSound(com.qoneqo.solitaire.R.raw.card_deal)
+                eventListener?.playSound(com.qoneqo.solitaire.R.raw.paper_slide)
                 eventListener?.onMovesChanged(gameState.moves)
             }
             return true
@@ -296,9 +296,9 @@ class InputHandler(
             // Remove from source
             repeat(stack.size) { fromPile.removeAt(fromPile.size - 1) }
             
-            // Auto flip card in tableau
             if (fromType == 2 && fromPile.isNotEmpty() && !fromPile.last().isFaceUp) {
                 fromPile.last().isFaceUp = true
+                eventListener?.playSound(com.qoneqo.solitaire.R.raw.pop)
             }
 
             // Add to destination
@@ -337,7 +337,8 @@ class InputHandler(
                 if (gameState.score < 0) gameState.score = 0
             }
 
-            eventListener?.playSound(com.qoneqo.solitaire.R.raw.card_place)
+            val sfx = if (toType == 1) com.qoneqo.solitaire.R.raw.sparkle else com.qoneqo.solitaire.R.raw.pop
+            eventListener?.playSound(sfx)
             eventListener?.onMovesChanged(gameState.moves)
             eventListener?.onScoreChanged(gameState.score)
             

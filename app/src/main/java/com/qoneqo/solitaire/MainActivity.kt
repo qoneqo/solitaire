@@ -52,7 +52,7 @@ class MainActivity : AppCompatActivity(), GameEventListener {
 
         // New Game Button
         findViewById<android.view.View>(R.id.newGameButton).setOnClickListener {
-            playSound(R.raw.card_place)
+            playSound(R.raw.pop)
             viewModel.resetGame()
             resetButtons()
             gameSurfaceView.setupNewGame()
@@ -60,12 +60,12 @@ class MainActivity : AppCompatActivity(), GameEventListener {
 
         // Settings Button replaced New Game Button
         findViewById<android.view.View>(R.id.settingsButton).setOnClickListener {
-            playSound(R.raw.card_place)
+            playSound(R.raw.tapping_glass)
             showSettingsMenu()
         }
 
         findViewById<android.view.View>(R.id.undoButton).setOnClickListener {
-            playSound(R.raw.card_place)
+            playSound(R.raw.bubble_pop)
             resetButtons()
             gameSurfaceView.undo()
         }
@@ -74,12 +74,12 @@ class MainActivity : AppCompatActivity(), GameEventListener {
         val autoFinishButton = findViewById<android.view.View>(R.id.autoFinishButton)
 
         hintButton.setOnClickListener {
-            playSound(R.raw.card_place)
+            playSound(R.raw.bubble_pop)
             gameSurfaceView.showHint()
         }
 
         autoFinishButton.setOnClickListener {
-            playSound(R.raw.card_place)
+            playSound(R.raw.bubble_pop)
             gameSurfaceView.startFastForward()
             autoFinishButton.visibility = android.view.View.GONE
         }
@@ -87,17 +87,17 @@ class MainActivity : AppCompatActivity(), GameEventListener {
         // Observe ViewModel states
         lifecycleScope.launch {
             viewModel.score.collect {
-                scoreText.text = "Score: $it"
+                scoreText.text = "$it"
             }
         }
         lifecycleScope.launch {
             viewModel.moves.collect {
-                movesText.text = "Moves: $it"
+                movesText.text = "$it"
             }
         }
         lifecycleScope.launch {
             viewModel.timeSeconds.collect {
-                timerText.text = "Time: ${it}s"
+                timerText.text = "${it}s"
             }
         }
 
