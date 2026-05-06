@@ -30,6 +30,7 @@ class WorldRenderer(private val am: CardAssetManager) {
         gameState: GameState, 
         layout: GameLayout, 
         activeCardStack: List<Card>?,
+        selectedStack: List<Card>? = null,
         hintedCard: Card? = null,
         hintTimer: Float = 0f,
         hintedSourceX: Float = 0f,
@@ -66,10 +67,10 @@ class WorldRenderer(private val am: CardAssetManager) {
         }
 
         // 2. Draw card stacks (except active cards)
-        drawStack(canvas, gameState.stock, activeCardStack, hintedCard)
-        drawStack(canvas, gameState.waste, activeCardStack, hintedCard)
-        gameState.foundations.forEach { drawStack(canvas, it, activeCardStack, hintedCard) }
-        gameState.tableaus.forEach { drawStack(canvas, it, activeCardStack, hintedCard) }
+        drawStack(canvas, gameState.stock, activeCardStack, selectedStack, hintedCard)
+        drawStack(canvas, gameState.waste, activeCardStack, selectedStack, hintedCard)
+        gameState.foundations.forEach { drawStack(canvas, it, activeCardStack, selectedStack, hintedCard) }
+        gameState.tableaus.forEach { drawStack(canvas, it, activeCardStack, selectedStack, hintedCard) }
 
         // 3. Draw active cards on top
         activeCardStack?.forEach { card ->
@@ -120,11 +121,21 @@ class WorldRenderer(private val am: CardAssetManager) {
         }
     }
 
-    private fun drawStack(canvas: Canvas, stack: List<Card>, activeCardStack: List<Card>?, hintedCard: Card?) {
+    private fun drawStack(canvas: Canvas, stack: List<Card>, activeCardStack: List<Card>?, selectedStack: List<Card>?, hintedCard: Card?) {
         for (card in stack) {
             if (activeCardStack?.contains(card) != true) {
                 canvas.drawBitmap(am.getCardBitmap(card), card.renderX, card.renderY, renderPaint)
                 
+                if (selectedStack?.contains(card) == true) {
+                    val rect = RectF(card.renderX, card.renderY, card.renderX + am.cardWidth, card.renderY + am.cardHeight)
+                    highlightPaint.alpha = 200
+                    highlightPaint.color = Color.CYAN
+                    canvas.drawRoundRect(rect, 10f, 10f, highlightPaint)
+                    // Reset paint
+                    highlightPaint.alpha = 150
+                    highlightPaint.color = Color.YELLOW
+                }
+
                 if (card == hintedCard) {
                     val rect = RectF(card.renderX, card.renderY, card.renderX + am.cardWidth, card.renderY + am.cardHeight)
                     canvas.drawRoundRect(rect, 10f, 10f, highlightPaint)

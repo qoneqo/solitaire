@@ -15,10 +15,13 @@ class InputHandler(
     private var sourcePileType = -1 // 0: Waste, 1: Foundation, 2: Tableau
     private var sourcePileIndex = -1
     
-    // Double Tap
-    private var lastTapTime: Long = 0
-    private var lastTapCard: Card? = null
-    private val DOUBLE_TAP_TIMEOUT = 300L
+    // Tap-to-Move State
+    var selectedStack: List<Card>? = null
+    private var selectedPileType = -1
+    private var selectedPileIndex = -1
+    private var touchDownX = 0f
+    private var touchDownY = 0f
+
 
     fun onTouchEvent(event: MotionEvent, gameState: GameState, layout: GameLayout): Boolean {
         val x = event.x
@@ -43,6 +46,47 @@ class InputHandler(
     }
 
     private fun handleActionDown(x: Float, y: Float, gameState: GameState, layout: GameLayout): Boolean {
+        touchDownX = x
+        touchDownY = y
+
+        // Check if we are tapping a valid destination for the currently selected stack
+        if (selectedStack != null) {
+            var destinationFound = false
+            
+            // Check foundation drop
+            if (selectedStack!!.size == 1) {
+                for (i in 0 until 4) {
+                    if (x >= layout.foundationX[i] && x <= layout.foundationX[i] + am.cardWidth &&
+                        y >= layout.foundationY && y <= layout.foundationY + am.cardHeight) {
+                        if (SolitaireRules.canMoveToFoundation(selectedStack!!.first(), gameState.foundations[i])) {
+                            executeMove(selectedStack!!, selectedPileType, selectedPileIndex, 1, i, gameState, layout)
+                            destinationFound = true
+                            break
+                        }
+                    }
+                }
+            }
+            
+            // Check tableau drop
+            if (!destinationFound) {
+                for (i in 0 until 7) {
+                    if (x >= layout.tableauX[i] && x <= layout.tableauX[i] + am.cardWidth && y >= layout.tableauY) {
+                        val tableau = gameState.tableaus[i]
+                        if (SolitaireRules.canMoveToTableau(selectedStack!!.first(), tableau)) {
+                            executeMove(selectedStack!!, selectedPileType, selectedPileIndex, 2, i, gameState, layout)
+                            destinationFound = true
+                            break
+                        }
+                    }
+                }
+            }
+
+            if (destinationFound) {
+                selectedStack = null
+                return true
+            }
+        }
+
         // 1. Check stock tap
         if (x >= layout.stockX && x <= layout.stockX + am.cardWidth && y >= layout.stockY && y <= layout.stockY + am.cardHeight) {
             queueAction {
@@ -78,17 +122,6 @@ class InputHandler(
                 if (card.isFaceUp && x >= layout.tableauX[i] && x <= layout.tableauX[i] + am.cardWidth &&
                     y >= cardY && y <= cardBottomY) {
                     
-                    // Double Tap Check
-                    val currentTime = System.currentTimeMillis()
-                    if (currentTime - lastTapTime < DOUBLE_TAP_TIMEOUT && lastTapCard == card && j == tableau.lastIndex) {
-                        if (tryAutoMoveToFoundation(card, 2, i, gameState, layout)) {
-                            lastTapTime = 0
-                            return true
-                        }
-                    }
-                    lastTapTime = currentTime
-                    lastTapCard = card
-
                     activeCardStack = tableau.subList(j, tableau.size).toList()
                     sourcePileType = 2
                     sourcePileIndex = i
@@ -108,17 +141,6 @@ class InputHandler(
         if (gameState.waste.isNotEmpty()) {
             val card = gameState.waste.last()
             if (x >= layout.wasteX && x <= layout.wasteX + am.cardWidth && y >= layout.wasteY && y <= layout.wasteY + am.cardHeight) {
-                // Double Tap Check
-                val currentTime = System.currentTimeMillis()
-                if (currentTime - lastTapTime < DOUBLE_TAP_TIMEOUT && lastTapCard == card) {
-                    if (tryAutoMoveToFoundation(card, 0, -1, gameState, layout)) {
-                        lastTapTime = 0
-                        return true
-                    }
-                }
-                lastTapTime = currentTime
-                lastTapCard = card
-
                 activeCardStack = listOf(card)
                 sourcePileType = 0
                 sourcePileIndex = -1
@@ -167,7 +189,50 @@ class InputHandler(
         }
 
         if (!moved) {
-            stack.forEach { it.isSnappingBack = true }
+            val dx = x - touchDownX
+            val dy = y - touchDownY
+            val isTap = dx * dx + dy * dy < 400 // Allow slight movement for tap
+
+            if (isTap) {
+                // Try auto-move
+                var autoMoved = false
+                
+                // 1. Try Foundation
+                if (stack.size == 1) {
+                    autoMoved = tryAutoMoveToFoundation(card, sourcePileType, sourcePileIndex, gameState, layout)
+                }
+                
+                // 2. Try Tableau
+                if (!autoMoved) {
+                    for (i in 0 until 7) {
+                        if (i != sourcePileIndex || sourcePileType != 2) {
+                            val tableau = gameState.tableaus[i]
+                            if (SolitaireRules.canMoveToTableau(card, tableau)) {
+                                executeMove(stack, sourcePileType, sourcePileIndex, 2, i, gameState, layout)
+                                autoMoved = true
+                                break
+                            }
+                        }
+                    }
+                }
+
+                if (autoMoved) {
+                    selectedStack = null
+                } else {
+                    // If auto-move fails, make it the selected stack
+                    selectedStack = stack
+                    selectedPileType = sourcePileType
+                    selectedPileIndex = sourcePileIndex
+                    stack.forEach { it.isSnappingBack = true }
+                }
+            } else {
+                // Was a drag that failed
+                selectedStack = null
+                stack.forEach { it.isSnappingBack = true }
+            }
+        } else {
+            // Was a successful drag
+            selectedStack = null
         }
 
         activeCardStack = null

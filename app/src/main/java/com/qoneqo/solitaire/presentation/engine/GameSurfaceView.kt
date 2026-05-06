@@ -586,7 +586,7 @@ class GameSurfaceView @JvmOverloads constructor(
     fun render(canvas: Canvas) {
         val l = layout ?: return
         val am = assetManager ?: return
-        renderer.render(canvas, gameState, l, inputHandler.activeCardStack, hintedCard, hintTimer, hintedSourceX, hintedSourceY, hintedTargetX, hintedTargetY, particles, cascadingCards)
+        renderer.render(canvas, gameState, l, inputHandler.activeCardStack, inputHandler.selectedStack, hintedCard, hintTimer, hintedSourceX, hintedSourceY, hintedTargetX, hintedTargetY, particles, cascadingCards)
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
