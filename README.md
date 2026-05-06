@@ -14,6 +14,8 @@ High-performance native Android Klondike Solitaire with intelligent solver and g
 - **Unlimited Undo**: Every action can be reverted seamlessly.
 - **Cascading Win Juice**: Iconic card fountain animation with physical bounce and particles.
 - **Local Stats**: Track your Top 10 scores, moves, and times via Room Database.
+- **Visual Customization**: Dynamic table colors and modern **Glassmorphism (75% opacity)** UI for a premium feel.
+- **Snappy Audio**: Optimized sound effects for instant tactile feedback.
 
 ## 📖 Documentation
 Detailed documentation of all features, game rules, and technical architecture can be found in [DOCUMENTATION.md](./DOCUMENTATION.md).

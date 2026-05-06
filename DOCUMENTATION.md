@@ -32,7 +32,7 @@ Game Klondike Solitaire profesional untuk Android yang dibangun dengan **Native 
 ### Tombol Aksi (Bawah)
 - **Undo**: Riwayat pembatalan tidak terbatas (Command Pattern).
 - **Hint**: Menampilkan saran langkah terbaik dengan visualisasi canggih.
-- **Settings**: Akses ke konfigurasi game dan fitur tambahan.
+- **Settings**: Akses ke konfigurasi game, kustomisasi visual, dan fitur tambahan.
 
 ---
 
@@ -70,6 +70,7 @@ Kami menjamin pengalaman bermain yang adil dan menantang:
 - **Cascading Win**: Saat menang, kartu akan melompat keluar dari foundation dengan fisika gravitasi dan pantulan (bounce) yang ikonik.
 - **Particle System**: Ledakan kembang api kecil (sparkles) saat kartu masuk ke foundation atau tableau.
 - **Smooth Physics**: Animasi "Snap-Back" yang halus jika kartu dilepas di posisi yang tidak valid.
+1.  **Optimized Audio**: Efek suara seperti `paper_slide` dan `tapping_glass` telah dipangkas (0.3s) untuk respon yang lebih instan dan snappy.
 
 ---
 
@@ -77,10 +78,17 @@ Kami menjamin pengalaman bermain yang adil dan menantang:
 
 Menu Settings menyediakan akses ke:
 - **New Game**: Memulai sesi baru dari koleksi game winnable.
+- **High Scores**: Papan peringkat lokal (Top 10) berbasis database Room dengan UI responsif.
+- **Customize Table Color**: Fitur kustomisasi warna meja melalui modal pemilihan warna berbasis grid yang responsif.
 - **Auto Solve Toggle**: Mengaktifkan/matikan bantuan bot.
 - **Sound Toggle**: Mengontrol semua efek suara game (Deal, Place, Win).
-- **High Scores**: Papan peringkat lokal (Top 10) berbasis database Room.
-- **Donate**: Tombol dukungan langsung ke pengembang melalui [qoneqo.id/support](https://qoneqo.id/support).
+- **Ambient Music Toggle**: Mengontrol musik latar yang menenangkan.
+- **Support Developer**: Tombol dukungan dengan ikon ☕ dan tautan langsung ke [qoneqo.id/support](https://qoneqo.id/support).
+- **Exit Game**: Tombol keluar dengan ikon 😢 untuk menyentuh hati pemain agar tidak pergi.
+
+### 🕒 Timer Intelligence
+- **Auto-Pause**: Timer permainan akan otomatis berhenti (*paused*) saat modal Settings atau High Score dibuka, memberikan pemain waktu untuk bernapas tanpa merusak skor waktu.
+- **Auto-Resume**: Timer akan otomatis berlanjut begitu modal ditutup.
 
 ---
 
@@ -97,6 +105,7 @@ Tersedia di folder `/tools`:
 - **Core**: Kotlin Native Canvas API (Zero-Allocation Loop).
 - **Database**: Android Room (SQLite) untuk Skor & State.
 - **Pattern**: MVVM (Model-View-ViewModel) + Command Pattern (Undo).
+- **Modern UI Components**: Menggunakan `ConstraintLayout` dan `RecyclerView` untuk dialog responsif dengan efek **Glassmorphism (75% opacity)**.
 - **Thread Management**: Dedicated Background Game Thread untuk memastikan UI tetap responsif.
 
 ---
