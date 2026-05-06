@@ -153,7 +153,8 @@ class GameSurfaceView @JvmOverloads constructor(
                         if (fromPile.isNotEmpty()) {
                             val card = fromPile.last()
                             hintedSourceX = if (move.fromType == 0) l.wasteX else l.tableauX[move.fromIdx]
-                            hintedSourceY = if (move.fromType == 0) l.wasteY else l.tableauY + (fromPile.size - 1) * am.verticalOffset
+                            val offset = l.getTableauOffset(fromPile.size, height.toFloat(), am.cardHeight, am.verticalOffset)
+                            hintedSourceY = if (move.fromType == 0) l.wasteY else l.tableauY + (fromPile.size - 1) * offset
                             
                             // Find correct foundation index
                             var targetIdx = move.toIdx
@@ -176,11 +177,13 @@ class GameSurfaceView @JvmOverloads constructor(
                         if (fromPile.size >= move.cardCount) {
                             val card = fromPile[fromPile.size - move.cardCount]
                             hintedSourceX = if (move.fromType == 0) l.wasteX else l.tableauX[move.fromIdx]
-                            hintedSourceY = if (move.fromType == 0) l.wasteY else l.tableauY + (fromPile.size - move.cardCount) * am.verticalOffset
+                            val sourceOffset = l.getTableauOffset(fromPile.size, height.toFloat(), am.cardHeight, am.verticalOffset)
+                            hintedSourceY = if (move.fromType == 0) l.wasteY else l.tableauY + (fromPile.size - move.cardCount) * sourceOffset
                             
                             val toPile = gameState.tableaus[move.toIdx]
                             hintedTargetX = l.tableauX[move.toIdx]
-                            hintedTargetY = l.tableauY + toPile.size * am.verticalOffset
+                            val targetOffset = l.getTableauOffset(toPile.size + 1, height.toFloat(), am.cardHeight, am.verticalOffset)
+                            hintedTargetY = l.tableauY + toPile.size * targetOffset
                             card
                         } else null
                     }
@@ -237,12 +240,7 @@ class GameSurfaceView @JvmOverloads constructor(
         }
         for (i in 0 until 7) {
             val pile = gameState.tableaus[i]
-            val maxTableauHeight = height.toFloat() - l.tableauY - am.cardHeight - (height * 0.05f)
-            val adaptiveOffset = if (pile.size > 1) {
-                kotlin.math.min(am.verticalOffset, maxTableauHeight / (pile.size - 1))
-            } else {
-                am.verticalOffset
-            }
+            val adaptiveOffset = l.getTableauOffset(pile.size, height.toFloat(), am.cardHeight, am.verticalOffset)
             pile.forEachIndexed { index, card ->
                 if (!card.isSnappingBack && inputHandler.activeCardStack?.contains(card) != true) {
                     card.renderX = l.tableauX[i]
@@ -577,7 +575,8 @@ class GameSurfaceView @JvmOverloads constructor(
                 gameState.moves++
                 gameEventListener?.playSound(com.qoneqo.solitaire.R.raw.pop)
                 gameEventListener?.onMovesChanged(gameState.moves)
-                emitParticles(l.tableauX[move.toIdx] + am.cardWidth / 2f, l.tableauY + (toPile.size - 1) * am.verticalOffset + am.cardHeight / 2f, Color.WHITE)
+                val offset = l.getTableauOffset(toPile.size, height.toFloat(), am.cardHeight, am.verticalOffset)
+                emitParticles(l.tableauX[move.toIdx] + am.cardWidth / 2f, l.tableauY + (toPile.size - 1) * offset + am.cardHeight / 2f, Color.WHITE)
             }
         }
         updateCardPositions()
@@ -618,7 +617,6 @@ class GameSurfaceView @JvmOverloads constructor(
 
     fun render(canvas: Canvas) {
         val l = layout ?: return
-        val am = assetManager ?: return
         renderer.render(canvas, gameState, l, inputHandler.activeCardStack, inputHandler.selectedStack, hintedCard, hintTimer, hintedSourceX, hintedSourceY, hintedTargetX, hintedTargetY, particles, cascadingCards, tableColor)
     }
 
@@ -626,7 +624,7 @@ class GameSurfaceView @JvmOverloads constructor(
         if (isWinAnimationActive) return false
         synchronized(gameStateLock) {
             val l = layout ?: return false
-            val handled = inputHandler.onTouchEvent(event, gameState, l)
+            val handled = inputHandler.onTouchEvent(event, gameState, l, height.toFloat())
             if (handled) {
                 isUsingLogbook = false
                 clearHint()

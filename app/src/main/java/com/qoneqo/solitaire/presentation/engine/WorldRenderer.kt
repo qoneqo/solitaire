@@ -151,4 +151,23 @@ data class GameLayout(
     val wasteX: Float, val wasteY: Float,
     val foundationX: FloatArray, val foundationY: Float,
     val tableauX: FloatArray, val tableauY: Float
-)
+) {
+    /**
+     * Calculates the vertical offset for cards in a tableau pile based on its size
+     * to ensure the entire pile fits on the screen.
+     */
+    fun getTableauOffset(pileSize: Int, screenHeight: Float, cardHeight: Float, defaultOffset: Float): Float {
+        if (pileSize <= 1) return defaultOffset
+        
+        // Available space from tableauY to bottom (with some margin)
+        val maxTableauHeight = screenHeight - tableauY - cardHeight - (screenHeight * 0.05f)
+        
+        // If we have enough space, use the default offset
+        val requiredHeight = (pileSize - 1) * defaultOffset
+        if (requiredHeight <= maxTableauHeight) return defaultOffset
+        
+        // Otherwise, compress the pile to fit, but don't go below a reasonable minimum
+        // (minimum 20% of default offset or enough to see the rank/suit)
+        return Math.max(defaultOffset * 0.2f, maxTableauHeight / (pileSize - 1))
+    }
+}
