@@ -56,6 +56,12 @@ class GameSurfaceView @JvmOverloads constructor(
     private var isWinAnimationActive = false
     private var cascadeTimer = 0f
     var tableColor: Int = android.graphics.Color.parseColor(GameConfig.BACKGROUND_COLOR)
+    
+    // Scrolling properties
+    var scrollOffsetY: Float = 0f
+    private var lastTouchY: Float = 0f
+    private var isScrolling: Boolean = false
+    private var maxScrollY: Float = 0f
 
     fun getCurrentLogbookId(): Int = currentLogbookEntry?.id ?: -1
 
@@ -617,22 +623,66 @@ class GameSurfaceView @JvmOverloads constructor(
 
     fun render(canvas: Canvas) {
         val l = layout ?: return
-        renderer.render(canvas, gameState, l, inputHandler.activeCardStack, inputHandler.selectedStack, hintedCard, hintTimer, hintedSourceX, hintedSourceY, hintedTargetX, hintedTargetY, particles, cascadingCards, tableColor)
+        renderer.render(canvas, gameState, l, inputHandler.activeCardStack, inputHandler.selectedStack, hintedCard, hintTimer, hintedSourceX, hintedSourceY, hintedTargetX, hintedTargetY, particles, cascadingCards, tableColor, scrollOffsetY)
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
         if (isWinAnimationActive) return false
         synchronized(gameStateLock) {
             val l = layout ?: return false
-            val handled = inputHandler.onTouchEvent(event, gameState, l, height.toFloat())
+            val h = height.toFloat()
+            
+            // 1. Try handling card interactions first
+            // InputHandler will now handle the coordinate mapping internally
+            val handled = inputHandler.onTouchEvent(event, gameState, l, h, scrollOffsetY)
+            
             if (handled) {
                 isUsingLogbook = false
                 clearHint()
+                isScrolling = false
+            } else {
+                // 2. If no card was touched, handle scrolling the tableau area
+                when (event.action) {
+                    MotionEvent.ACTION_DOWN -> {
+                        lastTouchY = event.y
+                        isScrolling = true
+                    }
+                    MotionEvent.ACTION_MOVE -> {
+                        if (isScrolling) {
+                            val dy = event.y - lastTouchY
+                            scrollOffsetY -= dy
+                            lastTouchY = event.y
+                            
+                            // Calculate max scroll based on tallest tableau
+                            val am = assetManager
+                            if (am != null) {
+                                var tallestPileHeight = 0f
+                                for (pile in gameState.tableaus) {
+                                    val offset = l.getTableauOffset(pile.size, h, am.cardHeight, am.verticalOffset)
+                                    val pileHeight = if (pile.isEmpty()) 0f else (pile.size - 1) * offset + am.cardHeight
+                                    if (pileHeight > tallestPileHeight) tallestPileHeight = pileHeight
+                                }
+                                
+                                // Padding bottom for cozy feel
+                                val bottomPadding = h * 0.4f 
+                                maxScrollY = Math.max(0f, (l.tableauY + tallestPileHeight + bottomPadding) - h)
+                            }
+                            
+                            // Clamp scroll
+                            if (scrollOffsetY < 0) scrollOffsetY = 0f
+                            if (scrollOffsetY > maxScrollY) scrollOffsetY = maxScrollY
+                        }
+                    }
+                    MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                        isScrolling = false
+                    }
+                }
             }
+            
             if (event.action == MotionEvent.ACTION_UP) {
                 updateCardPositions()
             }
-            return handled
+            return true // Capture MOVE/UP events
         }
     }
 

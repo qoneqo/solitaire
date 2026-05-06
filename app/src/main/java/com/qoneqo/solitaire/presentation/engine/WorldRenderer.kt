@@ -39,41 +39,59 @@ class WorldRenderer(private val am: CardAssetManager) {
         hintedTargetY: Float = 0f,
         particles: List<Particle> = emptyList(),
         cascadingCards: List<CascadingCard> = emptyList(),
-        tableColor: Int? = null
+        tableColor: Int? = null,
+        scrollOffsetY: Float = 0f
     ) {
         canvas.drawColor(tableColor ?: Color.parseColor(GameConfig.BACKGROUND_COLOR))
 
-        // 1. Draw empty slots and tableau borders
-        canvas.drawBitmap(am.emptySlotBitmap, Math.round(layout.stockX).toFloat(), Math.round(layout.stockY).toFloat(), renderPaint)
-        canvas.drawBitmap(am.emptySlotBitmap, Math.round(layout.wasteX).toFloat(), Math.round(layout.wasteY).toFloat(), renderPaint)
-        
-        for (i in 0 until 4) {
-            canvas.drawBitmap(am.emptySlotBitmap, Math.round(layout.foundationX[i]).toFloat(), Math.round(layout.foundationY).toFloat(), renderPaint)
-        }
+        // --- 1. Tableau Section (Scrollable & Clipped under HUD) ---
+        canvas.save()
+        // Clip to area below the HUD area (with a small top buffer for card rank visibility)
+        val hudHeight = layout.tableauY - 20f
+        canvas.clipRect(0f, hudHeight, canvas.width.toFloat(), canvas.height.toFloat())
+        canvas.translate(0f, -scrollOffsetY)
         
         for (i in 0 until 7) {
-            // Precise integer-aligned rect for the tableau column
             val tx = Math.round(layout.tableauX[i]).toFloat()
             val ty = Math.round(layout.tableauY).toFloat()
             val tw = Math.round(am.cardWidth).toFloat()
             
+            // Draw tableau border
             val tableauRect = RectF(
                 tx - 4f,
                 ty - 4f,
                 tx + tw + 4f,
-                canvas.height.toFloat() - 40f
+                canvas.height.toFloat() + scrollOffsetY + 400f // Extend border
             )
             canvas.drawRoundRect(tableauRect, 16f, 16f, borderPaint)
             canvas.drawBitmap(am.emptySlotBitmap, tx, ty, renderPaint)
+            
+            // Draw tableau stacks
+            drawStack(canvas, gameState.tableaus[i], activeCardStack, selectedStack, hintedCard)
         }
+        canvas.restore()
 
-        // 2. Draw card stacks (except active cards)
-        drawStack(canvas, gameState.stock, activeCardStack, selectedStack, hintedCard)
-        drawStack(canvas, gameState.waste, activeCardStack, selectedStack, hintedCard)
-        gameState.foundations.forEach { drawStack(canvas, it, activeCardStack, selectedStack, hintedCard) }
-        gameState.tableaus.forEach { drawStack(canvas, it, activeCardStack, selectedStack, hintedCard) }
+        // --- 2. HUD Section (Sticky Top) ---
+        // HUD Area: Stock, Waste, Foundations
+        canvas.drawBitmap(am.emptySlotBitmap, Math.round(layout.stockX).toFloat(), Math.round(layout.stockY).toFloat(), renderPaint)
+        canvas.drawBitmap(am.emptySlotBitmap, Math.round(layout.wasteX).toFloat(), Math.round(layout.wasteY).toFloat(), renderPaint)
+        for (i in 0 until 4) {
+            canvas.drawBitmap(am.emptySlotBitmap, Math.round(layout.foundationX[i]).toFloat(), Math.round(layout.foundationY).toFloat(), renderPaint)
+        }
+        
+        // Draw HUD Stacks (Fixed positions)
+        drawStack(canvas, gameState.stock, activeCardStack, selectedStack, hintedCard, 0f)
+        drawStack(canvas, gameState.waste, activeCardStack, selectedStack, hintedCard, 0f)
+        gameState.foundations.forEach { drawStack(canvas, it, activeCardStack, selectedStack, hintedCard, 0f) }
+        
+        // Draw a subtle shadow at the bottom of HUD
+        borderPaint.color = Color.BLACK
+        borderPaint.alpha = 40
+        canvas.drawRect(0f, hudHeight, canvas.width.toFloat(), hudHeight + 10f, borderPaint)
+        borderPaint.alpha = 255 
+        borderPaint.color = Color.WHITE
 
-        // 3. Draw active cards on top
+        // 3. Draw active cards on top (Screen Space)
         activeCardStack?.forEach { card ->
             canvas.drawBitmap(am.getCardBitmap(card), card.renderX, card.renderY, renderPaint)
         }
@@ -97,38 +115,45 @@ class WorldRenderer(private val am: CardAssetManager) {
             val alpha = (Math.min(1.0f, hintTimer) * 150).toInt()
             highlightPaint.alpha = alpha
             
-            // Draw highlight on source
-            canvas.drawRoundRect(
-                hintedSourceX - 5f, hintedSourceY - 5f, 
-                hintedSourceX + am.cardWidth + 5f, hintedSourceY + am.cardHeight + 5f, 
-                16f, 16f, highlightPaint
-            )
+            // Adjust hint Y if it's in the tableau area
+            val sy = if (hintedSourceY >= hudHeight) hintedSourceY - scrollOffsetY else hintedSourceY
+            val ty = if (hintedTargetY >= hudHeight) hintedTargetY - scrollOffsetY else hintedTargetY
             
-            // Draw highlight on target
-            canvas.drawRoundRect(
-                hintedTargetX - 5f, hintedTargetY - 5f, 
-                hintedTargetX + am.cardWidth + 5f, hintedTargetY + am.cardHeight + 5f, 
-                16f, 16f, highlightPaint
-            )
-            
-            // Draw connecting line/arrow
-            highlightPaint.strokeWidth = 4f
-            canvas.drawLine(
-                hintedSourceX + am.cardWidth / 2f, hintedSourceY + am.cardHeight / 2f,
-                hintedTargetX + am.cardWidth / 2f, hintedTargetY + am.cardHeight / 2f,
-                highlightPaint
-            )
-            highlightPaint.strokeWidth = 6f // reset
+            // Only draw hint if not clipped away
+            if (sy >= hudHeight - am.cardHeight || ty >= hudHeight - am.cardHeight) {
+                // Draw highlight on source
+                canvas.drawRoundRect(
+                    hintedSourceX - 5f, sy - 5f, 
+                    hintedSourceX + am.cardWidth + 5f, sy + am.cardHeight + 5f, 
+                    16f, 16f, highlightPaint
+                )
+                
+                // Draw highlight on target
+                canvas.drawRoundRect(
+                    hintedTargetX - 5f, ty - 5f, 
+                    hintedTargetX + am.cardWidth + 5f, ty + am.cardHeight + 5f, 
+                    16f, 16f, highlightPaint
+                )
+                
+                // Draw connecting line
+                highlightPaint.strokeWidth = 4f
+                canvas.drawLine(
+                    hintedSourceX + am.cardWidth / 2f, sy + am.cardHeight / 2f,
+                    hintedTargetX + am.cardWidth / 2f, ty + am.cardHeight / 2f,
+                    highlightPaint
+                )
+                highlightPaint.strokeWidth = 6f
+            }
         }
     }
 
-    private fun drawStack(canvas: Canvas, stack: List<Card>, activeCardStack: List<Card>?, selectedStack: List<Card>?, hintedCard: Card?) {
+    private fun drawStack(canvas: Canvas, stack: List<Card>, activeCardStack: List<Card>?, selectedStack: List<Card>?, hintedCard: Card?, offsetY: Float = 0f) {
         for (card in stack) {
             if (activeCardStack?.contains(card) != true) {
-                canvas.drawBitmap(am.getCardBitmap(card), card.renderX, card.renderY, renderPaint)
+                canvas.drawBitmap(am.getCardBitmap(card), card.renderX, card.renderY - offsetY, renderPaint)
                 
                 if (selectedStack?.contains(card) == true) {
-                    val rect = RectF(card.renderX, card.renderY, card.renderX + am.cardWidth, card.renderY + am.cardHeight)
+                    val rect = RectF(card.renderX, card.renderY - offsetY, card.renderX + am.cardWidth, card.renderY - offsetY + am.cardHeight)
                     highlightPaint.alpha = 200
                     highlightPaint.color = Color.CYAN
                     canvas.drawRoundRect(rect, 10f, 10f, highlightPaint)
@@ -138,7 +163,7 @@ class WorldRenderer(private val am: CardAssetManager) {
                 }
 
                 if (card == hintedCard) {
-                    val rect = RectF(card.renderX, card.renderY, card.renderX + am.cardWidth, card.renderY + am.cardHeight)
+                    val rect = RectF(card.renderX, card.renderY - offsetY, card.renderX + am.cardWidth, card.renderY - offsetY + am.cardHeight)
                     canvas.drawRoundRect(rect, 10f, 10f, highlightPaint)
                 }
             }
@@ -159,15 +184,18 @@ data class GameLayout(
     fun getTableauOffset(pileSize: Int, screenHeight: Float, cardHeight: Float, defaultOffset: Float): Float {
         if (pileSize <= 1) return defaultOffset
         
-        // Available space from tableauY to bottom (with some margin)
-        val maxTableauHeight = screenHeight - tableauY - cardHeight - (screenHeight * 0.05f)
+        // We want to keep the cards neat, so we use defaultOffset as much as possible.
+        // We only compress if the pile is truly enormous (e.g. 20+ cards) and we want to 
+        // keep it within a reasonable scrollable range.
+        // For standard games, defaultOffset is perfect.
         
-        // If we have enough space, use the default offset
-        val requiredHeight = (pileSize - 1) * defaultOffset
-        if (requiredHeight <= maxTableauHeight) return defaultOffset
+        val maxTotalHeight = screenHeight * 2.0f // Allow up to 2 screens of content
+        val availableSpace = maxTotalHeight - tableauY - cardHeight
         
-        // Otherwise, compress the pile to fit, but don't go below a reasonable minimum
-        // (minimum 20% of default offset or enough to see the rank/suit)
-        return Math.max(defaultOffset * 0.2f, maxTableauHeight / (pileSize - 1))
+        val calculatedOffset = availableSpace / (pileSize - 1)
+        
+        // Return defaultOffset but don't let it exceed defaultOffset (keep it neat)
+        // and don't let it go below 40% of default (keep it readable)
+        return Math.min(defaultOffset, Math.max(defaultOffset * 0.4f, calculatedOffset))
     }
 }

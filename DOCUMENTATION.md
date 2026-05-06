@@ -117,7 +117,6 @@ Tersedia di folder `/tools`:
 - **Database**: Android Room (SQLite) untuk Skor & State.
 - **Pattern**: MVVM (Model-View-ViewModel) + Command Pattern (Undo).
 - **Modern UI Components**: Menggunakan `ConstraintLayout` dan `RecyclerView` untuk dialog responsif dengan efek **Glassmorphism (75% opacity)**.
-- **Adaptive Tableau Layout**: Sistem cerdas yang secara otomatis mengatur jarak antar kartu (*vertical offset*) saat tumpukan kartu semakin tinggi, memastikan semua kartu tetap terlihat dan dapat diklik bahkan di layar horizontal yang sempit.
 - **Thread Management**: Dedicated Background Game Thread untuk memastikan UI tetap responsif.
 
 ---

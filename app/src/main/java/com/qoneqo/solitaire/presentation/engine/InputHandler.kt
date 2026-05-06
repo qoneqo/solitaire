@@ -23,32 +23,38 @@ class InputHandler(
     private var touchDownY = 0f
 
 
-    fun onTouchEvent(event: MotionEvent, gameState: GameState, layout: GameLayout, screenHeight: Float): Boolean {
+    fun onTouchEvent(event: MotionEvent, gameState: GameState, layout: GameLayout, screenHeight: Float, scrollOffsetY: Float): Boolean {
         val x = event.x
         val y = event.y
+        val hudHeight = layout.tableauY - 20f
 
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
-                return handleActionDown(x, y, gameState, layout, screenHeight)
+                return handleActionDown(x, y, gameState, layout, screenHeight, scrollOffsetY)
             }
             MotionEvent.ACTION_MOVE -> {
+                if (activeCardStack == null) return false
                 val offset = layout.getTableauOffset(activeCardStack!!.size, screenHeight, am.cardHeight, am.verticalOffset)
                 activeCardStack?.forEachIndexed { index, card ->
                     card.renderX = x - card.touchOffsetX
+                    
+                    // Dragged cards follow screen space
                     card.renderY = y - card.touchOffsetY + (index * offset)
                 }
-                return activeCardStack != null
+                return true
             }
             MotionEvent.ACTION_UP -> {
-                return handleActionUp(x, y, gameState, layout, screenHeight)
+                return handleActionUp(x, y, gameState, layout, screenHeight, scrollOffsetY)
             }
         }
         return false
     }
 
-    private fun handleActionDown(x: Float, y: Float, gameState: GameState, layout: GameLayout, screenHeight: Float): Boolean {
+    private fun handleActionDown(x: Float, y: Float, gameState: GameState, layout: GameLayout, screenHeight: Float, scrollOffsetY: Float): Boolean {
         touchDownX = x
         touchDownY = y
+        val hudHeight = layout.tableauY - 20f
+        val effectiveY = y + scrollOffsetY
 
         // Check if we are tapping a valid destination for the currently selected stack
         if (selectedStack != null) {
@@ -71,7 +77,7 @@ class InputHandler(
             // Check tableau drop
             if (!destinationFound) {
                 for (i in 0 until 7) {
-                    if (x >= layout.tableauX[i] && x <= layout.tableauX[i] + am.cardWidth && y >= layout.tableauY) {
+                    if (x >= layout.tableauX[i] && x <= layout.tableauX[i] + am.cardWidth && effectiveY >= layout.tableauY) {
                         val tableau = gameState.tableaus[i]
                         if (SolitaireRules.canMoveToTableau(selectedStack!!.first(), tableau)) {
                             executeMove(selectedStack!!, selectedPileType, selectedPileIndex, 2, i, gameState, layout, screenHeight)
@@ -112,7 +118,7 @@ class InputHandler(
             return true
         }
 
-        // 2. Tableaus
+        // 2. Tableaus (Effective Y)
         for (i in 6 downTo 0) {
             val tableau = gameState.tableaus[i]
             for (j in tableau.indices.reversed()) {
@@ -122,7 +128,7 @@ class InputHandler(
                 val cardBottomY = if (j == tableau.lastIndex) cardY + am.cardHeight else cardY + offset
                 
                 if (card.isFaceUp && x >= layout.tableauX[i] && x <= layout.tableauX[i] + am.cardWidth &&
-                    y >= cardY && y <= cardBottomY) {
+                    effectiveY >= cardY && effectiveY <= cardBottomY && y >= hudHeight) {
                     
                     activeCardStack = tableau.subList(j, tableau.size).toList()
                     sourcePileType = 2
@@ -132,7 +138,7 @@ class InputHandler(
                         c.originalX = c.renderX
                         c.originalY = c.renderY
                         c.touchOffsetX = x - c.renderX
-                        c.touchOffsetY = y - c.renderY
+                        c.touchOffsetY = y - (c.renderY - scrollOffsetY) 
                     }
                     return true
                 }
@@ -178,8 +184,9 @@ class InputHandler(
         return false
     }
 
-    private fun handleActionUp(x: Float, y: Float, gameState: GameState, layout: GameLayout, screenHeight: Float): Boolean {
+    private fun handleActionUp(x: Float, y: Float, gameState: GameState, layout: GameLayout, screenHeight: Float, scrollOffsetY: Float): Boolean {
         val stack = activeCardStack ?: return false
+        val effectiveY = y + scrollOffsetY
         val card = stack.first()
         var moved = false
  
@@ -200,7 +207,7 @@ class InputHandler(
         // Try drop on tableaus
         if (!moved) {
             for (i in 0 until 7) {
-                if (x >= layout.tableauX[i] && x <= layout.tableauX[i] + am.cardWidth) {
+                if (x >= layout.tableauX[i] && x <= layout.tableauX[i] + am.cardWidth && effectiveY >= layout.tableauY) {
                     val tableau = gameState.tableaus[i]
                     if (SolitaireRules.canMoveToTableau(card, tableau)) {
                         executeMove(stack, sourcePileType, sourcePileIndex, 2, i, gameState, layout, screenHeight)
