@@ -7,4 +7,5 @@ interface GameEventListener {
     fun onBotStuck(message: String)
     fun playSound(soundResId: Int)
     fun onEmitParticles(x: Float, y: Float, color: Int)
+    fun onAutoFinishAvailable()
 }

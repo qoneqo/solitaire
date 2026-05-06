@@ -37,6 +37,7 @@ class GameSurfaceView @JvmOverloads constructor(
     private var currentLogbookEntry: LogbookEntry? = null
     private var logbookStepIndex: Int = 0
     private var isGameFinished: Boolean = false
+    private var isFastForwarding: Boolean = false
 
     // Visual Effects
     private val moveHistory = LinkedList<LogbookMove>()
@@ -94,12 +95,18 @@ class GameSurfaceView @JvmOverloads constructor(
             movesSinceLastProgress = 0
             isGameFinished = false
             isAutoSolving = false
+            isFastForwarding = false
             hintedCard = null
             particles.clear()
             cascadingCards.clear()
             isWinAnimationActive = false
             updateCardPositions()
         }
+    }
+
+    fun startFastForward() {
+        isFastForwarding = true
+        isAutoSolving = true
     }
 
     fun undo() {
@@ -309,10 +316,15 @@ class GameSurfaceView @JvmOverloads constructor(
 
             if (isAutoSolving) {
                 solverTimer += dt
-                if (solverTimer >= 0.3f) {
+                val delay = if (isFastForwarding) 0.05f else 0.3f
+                if (solverTimer >= delay) {
                     solverTimer = 0f
                     performSolverMove()
                 }
+            }
+            
+            if (!isFastForwarding && isAutoFinishable()) {
+                gameEventListener?.onAutoFinishAvailable()
             }
             
             checkWinCondition()
@@ -372,6 +384,16 @@ class GameSurfaceView @JvmOverloads constructor(
             isWinAnimationActive = false
             gameEventListener?.onGameWon() // Finally show dialog
         }
+    }
+
+    private fun isAutoFinishable(): Boolean {
+        if (gameState.stock.isNotEmpty() || gameState.waste.isNotEmpty()) return false
+        for (tableau in gameState.tableaus) {
+            if (tableau.any { !it.isFaceUp }) return false
+        }
+        if (isGameFinished || isWinAnimationActive) return false
+        if (gameState.foundations.all { it.size == 13 }) return false
+        return true
     }
 
     private var nextCardToSpawnIdx = 12 // K down to A

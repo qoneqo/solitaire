@@ -61,9 +61,18 @@ class MainActivity : AppCompatActivity(), GameEventListener {
             gameSurfaceView.undo()
         }
 
-        findViewById<android.view.View>(R.id.hintButton).setOnClickListener {
+        val hintButton = findViewById<android.view.View>(R.id.hintButton)
+        val autoFinishButton = findViewById<android.view.View>(R.id.autoFinishButton)
+
+        hintButton.setOnClickListener {
             playSound(R.raw.card_place)
             gameSurfaceView.showHint()
+        }
+
+        autoFinishButton.setOnClickListener {
+            playSound(R.raw.card_place)
+            gameSurfaceView.startFastForward()
+            autoFinishButton.visibility = android.view.View.GONE
         }
 
         // Observe ViewModel states
@@ -88,7 +97,15 @@ class MainActivity : AppCompatActivity(), GameEventListener {
         viewModel.startTimer()
         
         // Forced New Game from Logbook on every start to ensure winnability
+        resetButtons()
         gameSurfaceView.setupNewGame()
+    }
+
+    private fun resetButtons() {
+        runOnUiThread {
+            findViewById<android.view.View>(R.id.hintButton).visibility = android.view.View.VISIBLE
+            findViewById<android.view.View>(R.id.autoFinishButton).visibility = android.view.View.GONE
+        }
     }
 
     override fun onPause() {
@@ -151,6 +168,7 @@ class MainActivity : AppCompatActivity(), GameEventListener {
             newGameButton.setOnClickListener {
                 dialog.dismiss()
                 viewModel.resetGame()
+                resetButtons()
                 gameSurfaceView.setupNewGame()
             }
             dialog.show()
@@ -179,6 +197,7 @@ class MainActivity : AppCompatActivity(), GameEventListener {
         btnNewGame.setOnClickListener {
             dialog.dismiss()
             viewModel.resetGame()
+            resetButtons()
             gameSurfaceView.setupNewGame()
         }
 
@@ -245,6 +264,17 @@ class MainActivity : AppCompatActivity(), GameEventListener {
     override fun onEmitParticles(x: Float, y: Float, color: Int) {
         runOnUiThread {
             gameSurfaceView.emitParticles(x, y, color)
+        }
+    }
+
+    override fun onAutoFinishAvailable() {
+        runOnUiThread {
+            val hintButton = findViewById<android.view.View>(R.id.hintButton)
+            val autoFinishButton = findViewById<android.view.View>(R.id.autoFinishButton)
+            if (autoFinishButton.visibility != android.view.View.VISIBLE) {
+                hintButton.visibility = android.view.View.GONE
+                autoFinishButton.visibility = android.view.View.VISIBLE
+            }
         }
     }
 
