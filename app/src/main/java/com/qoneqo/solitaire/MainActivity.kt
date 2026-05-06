@@ -192,12 +192,14 @@ class MainActivity : AppCompatActivity(), GameEventListener {
         val btnNewGame = dialogView.findViewById<Button>(R.id.btnNewGame)
         val btnAutoSolve = dialogView.findViewById<Button>(R.id.btnAutoSolve)
         val btnSound = dialogView.findViewById<Button>(R.id.btnSound)
+        val btnMusic = dialogView.findViewById<Button>(R.id.btnMusic)
         val btnHighScore = dialogView.findViewById<Button>(R.id.btnHighScore)
         val btnDonate = dialogView.findViewById<Button>(R.id.btnDonate)
         val btnExit = dialogView.findViewById<Button>(R.id.btnExit)
 
         btnAutoSolve.text = "Auto Solve: ${if (gameSurfaceView.isAutoSolving) "ON" else "OFF"}"
-        btnSound.text = "Sound: ${if (soundManager.isSoundEnabled()) "ON" else "OFF"}"
+        btnSound.text = "Sound FX: ${if (soundManager.isSoundEnabled()) "ON" else "OFF"}"
+        btnMusic.text = "Ambient Music: ${if (soundManager.isMusicEnabled()) "ON" else "OFF"}"
 
         val dialog = AlertDialog.Builder(this, R.style.CozyDialogTheme)
             .setView(dialogView)
@@ -218,7 +220,12 @@ class MainActivity : AppCompatActivity(), GameEventListener {
 
         btnSound.setOnClickListener {
             soundManager.setSoundEnabled(!soundManager.isSoundEnabled())
-            btnSound.text = "Sound: ${if (soundManager.isSoundEnabled()) "ON" else "OFF"}"
+            btnSound.text = "Sound FX: ${if (soundManager.isSoundEnabled()) "ON" else "OFF"}"
+        }
+
+        btnMusic.setOnClickListener {
+            soundManager.setMusicEnabled(!soundManager.isMusicEnabled())
+            btnMusic.text = "Ambient Music: ${if (soundManager.isMusicEnabled()) "ON" else "OFF"}"
         }
 
         btnHighScore.setOnClickListener {

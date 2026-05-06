@@ -44,7 +44,18 @@
         style="@style/Widget.Material3.Button.TonalButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Sound: ON"
+        android:text="Sound FX: ON"
+        android:backgroundTint="#c2d0cd"
+        android:textColor="#2d3436"
+        android:layout_marginBottom="8dp"
+        android:textAllCaps="false"/>
+
+    <Button
+        android:id="@+id/btnMusic"
+        style="@style/Widget.Material3.Button.TonalButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Ambient Music: ON"
         android:backgroundTint="#c2d0cd"
         android:textColor="#2d3436"
         android:layout_marginBottom="8dp"
