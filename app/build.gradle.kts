@@ -13,8 +13,8 @@ android {
         applicationId = "com.qoneqo.solitaire"
         minSdk = 21
         targetSdk = 36
-        versionCode = 6
-        versionName = "6.0"
+        versionCode = 8
+        versionName = "8.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
