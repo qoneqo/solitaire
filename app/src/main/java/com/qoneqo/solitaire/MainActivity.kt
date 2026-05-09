@@ -23,6 +23,11 @@ import com.qoneqo.solitaire.presentation.HighScoreAdapter
 import com.qoneqo.solitaire.presentation.TableColorAdapter
 import com.qoneqo.solitaire.presentation.engine.GameConfig
 import androidx.recyclerview.widget.GridLayoutManager
+import androidx.activity.enableEdgeToEdge
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updateLayoutParams
+import android.view.View
 
 class MainActivity : AppCompatActivity(), GameEventListener {
 
@@ -34,8 +39,36 @@ class MainActivity : AppCompatActivity(), GameEventListener {
     private lateinit var soundManager: SoundManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        
+        val mainLayout = findViewById<View>(R.id.mainLayout)
+        ViewCompat.setOnApplyWindowInsetsListener(mainLayout) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            
+            // Apply padding to avoid status bar and side notches
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0)
+            
+            val density = resources.displayMetrics.density
+            val margin16 = (16 * density).toInt()
+
+            // Bottom margin for FABs to avoid navigation bar
+            val fabIds = listOf(R.id.newGameButton, R.id.undoButton, R.id.hintButton, R.id.settingsButton)
+            fabIds.forEach { id ->
+                findViewById<View>(id).updateLayoutParams<ViewGroup.MarginLayoutParams> {
+                    bottomMargin = systemBars.bottom + margin16
+                }
+            }
+            
+            // Adjust auto-finish button which is above the main row
+            findViewById<View>(R.id.autoFinishButton).updateLayoutParams<ViewGroup.MarginLayoutParams> {
+                bottomMargin = margin16
+            }
+            
+            insets
+        }
+
         soundManager = SoundManager(this)
 
         gameSurfaceView = findViewById(R.id.gameSurfaceView)
