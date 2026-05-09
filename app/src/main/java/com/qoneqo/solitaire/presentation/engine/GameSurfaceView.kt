@@ -27,7 +27,7 @@ class GameSurfaceView @JvmOverloads constructor(
     private lateinit var renderer: WorldRenderer
     private lateinit var physics: PhysicsEngine
     private lateinit var inputHandler: InputHandler
-    private var layout: GameLayout? = null
+    var layout: GameLayout? = null
     var uiHeaderHeight: Float = 0f
 
     // Bot Properties
@@ -63,7 +63,8 @@ class GameSurfaceView @JvmOverloads constructor(
     private var isScrolling: Boolean = false
     private var maxScrollY: Float = 0f
 
-    fun getCurrentLogbookId(): Int = currentLogbookEntry?.id ?: -1
+    fun getCardWidth(): Float = assetManager?.cardWidth ?: 0f
+    fun getCardHeight(): Float = assetManager?.cardHeight ?: 0f
 
     init {
         holder.addCallback(this)
@@ -275,8 +276,9 @@ class GameSurfaceView @JvmOverloads constructor(
         assetManager = CardAssetManager(context, w.toInt(), h.toInt())
         val am = assetManager!!
         
-        val marginY = h * GameConfig.MARGIN_Y_RATIO
-        val stockY = if (uiHeaderHeight > 0) uiHeaderHeight + marginY else marginY + (h * GameConfig.TOP_UI_OFFSET_RATIO)
+        val density = context.resources.displayMetrics.density
+        val marginY = h * 0.02f // Restored to 2% for breathing room
+        val stockY = if (uiHeaderHeight > 0) uiHeaderHeight else marginY + (h * GameConfig.TOP_UI_OFFSET_RATIO)
         
         val minSpacing = 2f * context.resources.displayMetrics.density
         val totalBoardWidth = (7 * am.cardWidth) + (6 * minSpacing)
@@ -291,7 +293,7 @@ class GameSurfaceView @JvmOverloads constructor(
             stockX = dynamicMarginX, stockY = stockY,
             wasteX = dynamicMarginX + am.cardWidth + spacingX, wasteY = stockY,
             foundationX = fX, foundationY = stockY,
-            tableauX = tX, tableauY = stockY + am.cardHeight + marginY
+            tableauX = tX, tableauY = stockY + am.cardHeight + marginY + (4f * density)
         )
 
         renderer = WorldRenderer(am)

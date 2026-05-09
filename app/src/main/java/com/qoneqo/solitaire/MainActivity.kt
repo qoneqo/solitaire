@@ -91,13 +91,21 @@ class MainActivity : AppCompatActivity(), GameEventListener {
             playSound(R.raw.bubble_pop)
             if (instructionsCard.visibility == android.view.View.VISIBLE) {
                 instructionsCard.visibility = android.view.View.GONE
-                (it as android.widget.Button).text = "How to Play?"
+                (it as android.widget.Button).text = "Review Rules"
             } else {
                 instructionsCard.visibility = android.view.View.VISIBLE
                 (it as android.widget.Button).text = "Got it!"
             }
         }
         val btnInteractiveTutorial = findViewById<android.view.View>(R.id.btnInteractiveTutorial)
+        val cbDontShowAgain = findViewById<com.google.android.material.checkbox.MaterialCheckBox>(R.id.cbDontShowAgain)
+        
+        // Check if intro should be hidden
+        val prefs = getSharedPreferences("settings", MODE_PRIVATE)
+        if (prefs.getBoolean("hide_intro", false)) {
+            introLayout.visibility = android.view.View.GONE
+            viewModel.startTimer()
+        }
         val tutorialOverlay = findViewById<android.view.View>(R.id.tutorialOverlay)
         val btnNextTutorial = findViewById<android.view.View>(R.id.btnNextTutorial)
         val btnSkipTutorial = findViewById<android.view.View>(R.id.btnSkipTutorial)
@@ -122,20 +130,78 @@ class MainActivity : AppCompatActivity(), GameEventListener {
             val step = steps[currentStep]
             tutorialText.text = "${step.first}\n\n${step.second}"
             
+            // Change button text to "Finish" on the last step
+            (btnNextTutorial as? android.widget.Button)?.text = if (currentStep == steps.size - 1) "Finish" else "Next"
+            
             spotlightView.post {
+                val locSpot = IntArray(2)
+                spotlightView.getLocationInWindow(locSpot)
+                val offsetX = locSpot[0].toFloat()
+                val offsetY = locSpot[1].toFloat()
+
+                val locGame = IntArray(2)
+                gameSurfaceView.getLocationInWindow(locGame)
+                val gameX = locGame[0].toFloat() - offsetX
+                val gameY = locGame[1].toFloat() - offsetY
+
+                val layout = gameSurfaceView.layout
+                val cw = gameSurfaceView.getCardWidth()
+                val ch = gameSurfaceView.getCardHeight()
                 val w = spotlightView.width.toFloat()
                 val h = spotlightView.height.toFloat()
-                val rect = android.graphics.RectF(
-                    step.third.left * w,
-                    step.third.top * h,
-                    step.third.right * w,
-                    step.third.bottom * h
-                )
+                
+                val rect = when (currentStep) {
+                    0 -> { // The Deck (Stock & Waste)
+                        if (layout != null) {
+                            android.graphics.RectF(
+                                gameX + layout.stockX - 24f, 
+                                gameY + layout.stockY - 24f, 
+                                gameX + layout.wasteX + cw + 24f, 
+                                gameY + layout.stockY + ch + 24f
+                            )
+                        } else null
+                    }
+                    1 -> { // Foundations
+                        if (layout != null) {
+                            android.graphics.RectF(
+                                gameX + layout.foundationX[0] - 24f, 
+                                gameY + layout.foundationY - 24f, 
+                                gameX + layout.foundationX[3] + cw + 24f, 
+                                gameY + layout.foundationY + ch + 24f
+                            )
+                        } else null
+                    }
+                    2 -> { // Tableau
+                        if (layout != null) {
+                            android.graphics.RectF(
+                                gameX + layout.tableauX[0] - 24f, 
+                                gameY + layout.tableauY - 24f, 
+                                gameX + layout.tableauX[6] + cw + 24f, 
+                                gameY + layout.tableauY + ch * 4f // Highlight initial tableau area
+                            )
+                        } else null
+                    }
+                    3 -> { // Helpful Tools (Bottom FABs)
+                        val newBtn = findViewById<android.view.View>(R.id.newGameButton)
+                        val settingsBtn = findViewById<android.view.View>(R.id.settingsButton)
+                        val locNew = IntArray(2); newBtn.getLocationInWindow(locNew)
+                        val locSet = IntArray(2); settingsBtn.getLocationInWindow(locSet)
+                        
+                        android.graphics.RectF(
+                            (locNew[0] - offsetX).toFloat() - 24f,
+                            (locNew[1] - offsetY).toFloat() - 24f,
+                            (locSet[0] - offsetX + settingsBtn.width).toFloat() + 24f,
+                            (locSet[1] - offsetY + settingsBtn.height).toFloat() + 24f
+                        )
+                    }
+                    else -> null
+                } ?: android.graphics.RectF(step.third.left * w, step.third.top * h, step.third.right * w, step.third.bottom * h)
+
                 spotlightView.setSpotlightRect(rect)
 
-                // Move card to avoid spotlight
+                // Move instruction card to avoid spotlight
                 val params = tutorialCard.layoutParams as androidx.constraintlayout.widget.ConstraintLayout.LayoutParams
-                params.verticalBias = if (step.third.centerY() > 0.5f) 0.2f else 0.7f
+                params.verticalBias = if (rect.centerY() > h / 2f) 0.15f else 0.75f
                 tutorialCard.layoutParams = params
             }
         }
@@ -162,6 +228,9 @@ class MainActivity : AppCompatActivity(), GameEventListener {
 
         btnStartGame.setOnClickListener {
             playSound(R.raw.pop)
+            if (cbDontShowAgain.isChecked) {
+                getSharedPreferences("settings", MODE_PRIVATE).edit().putBoolean("hide_intro", true).apply()
+            }
             introLayout.animate()
                 .alpha(0f)
                 .setDuration(500)
@@ -176,8 +245,17 @@ class MainActivity : AppCompatActivity(), GameEventListener {
         // Measure UI to avoid overlap with game surface
         val statsRow = findViewById<android.view.View>(R.id.statsRow)
         statsRow.post {
-            gameSurfaceView.uiHeaderHeight = statsRow.bottom.toFloat()
-            // Force engine re-init with new height
+            val density = resources.displayMetrics.density
+            val locStats = IntArray(2)
+            val locGame = IntArray(2)
+            statsRow.getLocationInWindow(locStats)
+            gameSurfaceView.getLocationInWindow(locGame)
+            
+            // Calculate bottom of stats row relative to the surface view's own origin
+            val relativeBottom = (locStats[1] + statsRow.height - locGame[1]).toFloat()
+            
+            // Provide a slightly larger 12dp gap for better visual breathing room
+            gameSurfaceView.uiHeaderHeight = relativeBottom + (12 * density)
             gameSurfaceView.initEngine()
         }
 
@@ -325,6 +403,11 @@ class MainActivity : AppCompatActivity(), GameEventListener {
         val btnHighScore = dialogView.findViewById<Button>(R.id.btnHighScore)
         val btnDonate = dialogView.findViewById<Button>(R.id.btnDonate)
         val btnExit = dialogView.findViewById<Button>(R.id.btnExit)
+        val btnShowIntro = dialogView.findViewById<Button>(R.id.btnShowIntro)
+
+        val prefs = getSharedPreferences("settings", MODE_PRIVATE)
+        var showIntro = !prefs.getBoolean("hide_intro", false)
+        btnShowIntro.text = "Show Intro on Start: ${if (showIntro) "ON" else "OFF"}"
 
         btnAutoSolve.text = "Auto Solve: ${if (gameSurfaceView.isAutoSolving) "ON" else "OFF"}"
         btnSound.text = "Sound FX: ${if (soundManager.isSoundEnabled()) "ON" else "OFF"}"
@@ -367,6 +450,12 @@ class MainActivity : AppCompatActivity(), GameEventListener {
         btnMusic.setOnClickListener {
             soundManager.setMusicEnabled(!soundManager.isMusicEnabled())
             btnMusic.text = "Ambient Music: ${if (soundManager.isMusicEnabled()) "ON" else "OFF"}"
+        }
+
+        btnShowIntro.setOnClickListener {
+            showIntro = !showIntro
+            getSharedPreferences("settings", MODE_PRIVATE).edit().putBoolean("hide_intro", !showIntro).apply()
+            btnShowIntro.text = "Show Intro on Start: ${if (showIntro) "ON" else "OFF"}"
         }
 
         btnHighScore.setOnClickListener {

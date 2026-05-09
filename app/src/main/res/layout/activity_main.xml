@@ -21,8 +21,8 @@
     <View
         android:id="@+id/headerBg"
         android:layout_width="match_parent"
-        android:layout_height="64dp"
-        android:background="#33000000"
+        android:layout_height="48dp"
+        android:background="#22000000"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
@@ -32,7 +32,7 @@
         android:layout_marginStart="24dp"
         android:text="Solitaire"
         android:textColor="#FFFFFF"
-        android:textSize="24sp"
+        android:textSize="18sp"
         android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="@id/headerBg"
         app:layout_constraintStart_toStartOf="parent"
@@ -43,8 +43,8 @@
         android:id="@+id/statsRow"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginHorizontal="16dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginHorizontal="12dp"
+        android:layout_marginTop="8dp"
         android:orientation="horizontal"
         app:layout_constraintTop_toBottomOf="@id/headerBg">
 
@@ -57,7 +57,7 @@
             android:background="@drawable/glass_tile_bg"
             android:gravity="center"
             android:orientation="vertical"
-            android:padding="12dp">
+            android:padding="8dp">
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -70,7 +70,7 @@
                 android:layout_height="wrap_content"
                 android:text="0"
                 android:textColor="#FFFFFF"
-                android:textSize="18sp"
+                android:textSize="16sp"
                 android:textStyle="bold" />
         </LinearLayout>
 
@@ -83,7 +83,7 @@
             android:background="@drawable/glass_tile_bg"
             android:gravity="center"
             android:orientation="vertical"
-            android:padding="12dp">
+            android:padding="8dp">
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -96,7 +96,7 @@
                 android:layout_height="wrap_content"
                 android:text="0s"
                 android:textColor="#FFFFFF"
-                android:textSize="18sp"
+                android:textSize="16sp"
                 android:textStyle="bold" />
         </LinearLayout>
 
@@ -109,7 +109,7 @@
             android:background="@drawable/glass_tile_bg"
             android:gravity="center"
             android:orientation="vertical"
-            android:padding="12dp">
+            android:padding="8dp">
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -122,7 +122,7 @@
                 android:layout_height="wrap_content"
                 android:text="0"
                 android:textColor="#FFFFFF"
-                android:textSize="18sp"
+                android:textSize="16sp"
                 android:textStyle="bold" />
         </LinearLayout>
     </LinearLayout>
@@ -207,15 +207,18 @@
         android:clickable="true"
         android:focusable="true">
 
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="vertical"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
+        <androidx.core.widget.NestedScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fillViewport="true">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:paddingVertical="48dp"
+                android:paddingHorizontal="24dp">
 
             <TextView
                 android:layout_width="wrap_content"
@@ -233,47 +236,69 @@
                 android:textColor="#B3FFFFFF"
                 android:textSize="16sp" />
 
+            <!-- Concise Tagline -->
+            <TextView
+                android:layout_width="300dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:gravity="center"
+                android:text="Deep relaxation. Nothing else matters."
+                android:textColor="#FFFFFF"
+                android:textSize="18sp"
+                android:textStyle="italic" />
+
+            <TextView
+                android:layout_width="280dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:gravity="center"
+                android:text="Line up the deck from Ace to King. Easygoing, classic, satisfying."
+                android:textColor="#CCFFFFFF"
+                android:textSize="14sp" />
+
+            <!-- Primary Actions Group -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnStartGame"
                 style="@style/Widget.Material3.Button.TonalButton"
-                android:layout_width="wrap_content"
+                android:layout_width="240dp"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="48dp"
-                android:paddingHorizontal="32dp"
-                android:paddingVertical="12dp"
+                android:paddingVertical="16dp"
                 android:text="Start Playing"
                 android:textColor="#2d3436"
                 android:textSize="18sp"
+                android:textStyle="bold"
                 app:backgroundTint="#FFFFFF"
-                app:cornerRadius="24dp" />
+                app:cornerRadius="12dp"
+                app:rippleColor="#22000000" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnInteractiveTutorial"
-                style="@style/Widget.Material3.Button.TonalButton"
-                android:layout_width="wrap_content"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="240dp"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:paddingHorizontal="24dp"
                 android:text="Interactive Tutorial"
                 android:textColor="#FFFFFF"
-                app:backgroundTint="#33FFFFFF"
-                app:cornerRadius="24dp" />
+                app:cornerRadius="12dp"
+                app:strokeColor="#FFFFFF" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnHowToPlay"
                 style="@style/Widget.Material3.Button.TextButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="Basic Rules (Text)"
-                android:textColor="#FFFFFF" />
+                android:layout_marginTop="32dp"
+                android:text="Review Rules"
+                android:textColor="#B3FFFFFF"
+                android:textSize="12sp" />
 
-            <!-- Instructions Panel (Initially Hidden) -->
+            <!-- Instructions Panel (Moved here) -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/instructionsCard"
                 android:layout_width="320dp"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
+                android:layout_marginTop="16dp"
                 android:visibility="gone"
                 app:cardBackgroundColor="#CCFFFFFF"
                 app:cardCornerRadius="16dp"
@@ -305,7 +330,30 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-        </LinearLayout>
+            <com.google.android.material.checkbox.MaterialCheckBox
+                android:id="@+id/cbDontShowAgain"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="32dp"
+                android:button="@drawable/checkbox_selector"
+                android:paddingStart="8dp"
+                android:text="Don't show this screen again"
+                android:textColor="#B3FFFFFF"
+                android:textSize="12sp"
+                app:buttonTint="@null" />
+
+            <TextView
+                android:layout_width="240dp"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="You can always access these settings and the tutorial from the menu icon in the game."
+                android:textColor="#80FFFFFF"
+                android:textSize="10sp"
+                android:layout_marginBottom="16dp"
+                 />
+
+            </LinearLayout>
+        </androidx.core.widget.NestedScrollView>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
