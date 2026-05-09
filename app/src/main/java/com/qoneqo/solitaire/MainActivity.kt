@@ -80,6 +80,97 @@ class MainActivity : AppCompatActivity(), GameEventListener {
         movesText = findViewById(R.id.movesText)
         timerText = findViewById(R.id.timerText)
 
+        // Setup Intro Screen
+        val introLayout = findViewById<android.view.View>(R.id.introLayout)
+        val btnStartGame = findViewById<android.view.View>(R.id.btnStartGame)
+        val btnHowToPlay = findViewById<android.view.View>(R.id.btnHowToPlay)
+        val instructionsCard = findViewById<android.view.View>(R.id.instructionsCard)
+        introLayout.setBackgroundColor(colorInt)
+
+        btnHowToPlay.setOnClickListener {
+            playSound(R.raw.bubble_pop)
+            if (instructionsCard.visibility == android.view.View.VISIBLE) {
+                instructionsCard.visibility = android.view.View.GONE
+                (it as android.widget.Button).text = "How to Play?"
+            } else {
+                instructionsCard.visibility = android.view.View.VISIBLE
+                (it as android.widget.Button).text = "Got it!"
+            }
+        }
+        val btnInteractiveTutorial = findViewById<android.view.View>(R.id.btnInteractiveTutorial)
+        val tutorialOverlay = findViewById<android.view.View>(R.id.tutorialOverlay)
+        val btnNextTutorial = findViewById<android.view.View>(R.id.btnNextTutorial)
+        val btnSkipTutorial = findViewById<android.view.View>(R.id.btnSkipTutorial)
+        val spotlightView = findViewById<com.qoneqo.solitaire.presentation.SpotlightView>(R.id.spotlightView)
+        val tutorialText = findViewById<android.widget.TextView>(R.id.tutorialText)
+        val tutorialCard = findViewById<android.view.View>(R.id.tutorialCard)
+
+        var currentStep = 0
+        val steps = listOf(
+            Triple("The Deck", "Tap here to draw new cards from the stock pile.", android.graphics.RectF(0.05f, 0.08f, 0.25f, 0.22f)),
+            Triple("Foundations", "Move cards here from Ace to King to win the game!", android.graphics.RectF(0.45f, 0.08f, 0.95f, 0.22f)),
+            Triple("Tableau", "Build sequences here in alternating colors and descending order.", android.graphics.RectF(0.05f, 0.35f, 0.95f, 0.75f)),
+            Triple("Helpful Tools", "Use Hint if you're stuck, or Undo to fix a mistake!", android.graphics.RectF(0.15f, 0.85f, 0.85f, 0.98f))
+        )
+
+        fun updateTutorialStep() {
+            if (currentStep >= steps.size) {
+                tutorialOverlay.visibility = android.view.View.GONE
+                introLayout.visibility = android.view.View.VISIBLE
+                return
+            }
+            val step = steps[currentStep]
+            tutorialText.text = "${step.first}\n\n${step.second}"
+            
+            spotlightView.post {
+                val w = spotlightView.width.toFloat()
+                val h = spotlightView.height.toFloat()
+                val rect = android.graphics.RectF(
+                    step.third.left * w,
+                    step.third.top * h,
+                    step.third.right * w,
+                    step.third.bottom * h
+                )
+                spotlightView.setSpotlightRect(rect)
+
+                // Move card to avoid spotlight
+                val params = tutorialCard.layoutParams as androidx.constraintlayout.widget.ConstraintLayout.LayoutParams
+                params.verticalBias = if (step.third.centerY() > 0.5f) 0.2f else 0.7f
+                tutorialCard.layoutParams = params
+            }
+        }
+
+        btnInteractiveTutorial.setOnClickListener {
+            playSound(R.raw.bubble_pop)
+            introLayout.visibility = android.view.View.GONE
+            tutorialOverlay.visibility = android.view.View.VISIBLE
+            currentStep = 0
+            updateTutorialStep()
+        }
+
+        btnNextTutorial.setOnClickListener {
+            playSound(R.raw.pop)
+            currentStep++
+            updateTutorialStep()
+        }
+
+        btnSkipTutorial.setOnClickListener {
+            playSound(R.raw.bubble_pop)
+            tutorialOverlay.visibility = android.view.View.GONE
+            introLayout.visibility = android.view.View.VISIBLE
+        }
+
+        btnStartGame.setOnClickListener {
+            playSound(R.raw.pop)
+            introLayout.animate()
+                .alpha(0f)
+                .setDuration(500)
+                .withEndAction {
+                    introLayout.visibility = android.view.View.GONE
+                    viewModel.startTimer()
+                }
+        }
+
         gameSurfaceView.gameEventListener = this
         
         // Measure UI to avoid overlap with game surface
@@ -141,7 +232,7 @@ class MainActivity : AppCompatActivity(), GameEventListener {
             }
         }
 
-        viewModel.startTimer()
+        // Timer now starts when btnStartGame is clicked
         
         // Forced New Game from Logbook on every start to ensure winnability
         resetButtons()
