@@ -7,6 +7,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.qoneqo.solitaire.R
 import com.qoneqo.solitaire.data.StatEntity
+import com.qoneqo.solitaire.utils.TimeUtils
 
 class HighScoreAdapter(private val scores: List<StatEntity>) :
     RecyclerView.Adapter<HighScoreAdapter.ViewHolder>() {
@@ -27,7 +28,7 @@ class HighScoreAdapter(private val scores: List<StatEntity>) :
         val stat = scores[position]
         holder.rankText.text = "#${position + 1}"
         holder.scoreText.text = "Score: ${stat.score}"
-        holder.detailsText.text = "Moves: ${stat.moves} | Time: ${stat.timeElapsedSeconds}s"
+        holder.detailsText.text = "Moves: ${stat.moves} | Time: ${TimeUtils.formatTime(stat.timeElapsedSeconds)}"
     }
 
     override fun getItemCount() = scores.size

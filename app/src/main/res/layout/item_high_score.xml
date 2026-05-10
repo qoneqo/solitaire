@@ -43,7 +43,7 @@
                 android:id="@+id/detailsText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Moves: 120 | Time: 45s"
+                android:text="Moves: 0 | Time: 0s"
                 android:textColor="#636e72"
                 android:textSize="14sp"/>
         </LinearLayout>

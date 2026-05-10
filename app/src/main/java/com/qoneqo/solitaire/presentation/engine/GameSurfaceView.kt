@@ -688,6 +688,7 @@ class GameSurfaceView @JvmOverloads constructor(
         if (!isGameFinished && !isWinAnimationActive && gameState.foundations.all { it.size == 13 }) {
             isGameFinished = true
             isAutoSolving = false
+            gameEventListener?.onWinAnimationStarted()
             isWinAnimationActive = true // Start cascade instead of showing dialog immediately
             android.util.Log.d("GameBot", "Starting Win Cascade Animation!")
         }

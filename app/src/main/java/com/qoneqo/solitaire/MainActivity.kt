@@ -28,6 +28,8 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updateLayoutParams
 import android.view.View
+import com.qoneqo.solitaire.utils.TimeUtils
+
 
 class MainActivity : AppCompatActivity(), GameEventListener {
 
@@ -306,7 +308,7 @@ class MainActivity : AppCompatActivity(), GameEventListener {
         }
         lifecycleScope.launch {
             viewModel.timeSeconds.collect {
-                timerText.text = "${it}s"
+                timerText.text = TimeUtils.formatTime(it)
             }
         }
 
@@ -363,7 +365,6 @@ class MainActivity : AppCompatActivity(), GameEventListener {
 
     override fun onGameWon() {
         runOnUiThread {
-            viewModel.onGameWon()
             soundManager.playSound(R.raw.win_sound)
             
             val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_game_won, null)
@@ -373,7 +374,7 @@ class MainActivity : AppCompatActivity(), GameEventListener {
             val newGameButton = dialogView.findViewById<Button>(R.id.newGameButton)
             
             scoreView.text = "${viewModel.score.value}"
-            timeView.text = "${viewModel.timeSeconds.value}s"
+            timeView.text = TimeUtils.formatTime(viewModel.timeSeconds.value)
             messageView.text = "Congratulations! You won the game in ${viewModel.moves.value} moves."
             
             val dialog = AlertDialog.Builder(this, R.style.CozyDialogTheme)
@@ -391,6 +392,12 @@ class MainActivity : AppCompatActivity(), GameEventListener {
             
             val width = (resources.displayMetrics.widthPixels * 0.90).toInt()
             dialog.window?.setLayout(width, ViewGroup.LayoutParams.WRAP_CONTENT)
+        }
+    }
+
+    override fun onWinAnimationStarted() {
+        runOnUiThread {
+            viewModel.onGameWon()
         }
     }
 
