@@ -263,10 +263,12 @@ class MainActivity : AppCompatActivity(), GameEventListener {
 
         // New Game Button
         findViewById<android.view.View>(R.id.newGameButton).setOnClickListener {
-            playSound(R.raw.pop)
-            viewModel.resetGame()
-            resetButtons()
-            gameSurfaceView.setupNewGame()
+            playSound(R.raw.bubble_pop)
+            confirmNewGame {
+                viewModel.resetGame()
+                resetButtons()
+                gameSurfaceView.setupNewGame()
+            }
         }
 
         // Settings Button replaced New Game Button
@@ -401,6 +403,37 @@ class MainActivity : AppCompatActivity(), GameEventListener {
         }
     }
 
+    private fun confirmNewGame(onConfirm: () -> Unit) {
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_confirm_new_game, null)
+        val btnCancel = dialogView.findViewById<Button>(R.id.btnCancel)
+        val btnConfirm = dialogView.findViewById<Button>(R.id.btnConfirm)
+
+        val dialog = AlertDialog.Builder(this, R.style.CozyDialogTheme)
+            .setView(dialogView)
+            .create()
+
+        // Match table color
+        val currentColorStr = getSharedPreferences("settings", MODE_PRIVATE).getString("bg_color", GameConfig.BACKGROUND_COLOR) ?: GameConfig.BACKGROUND_COLOR
+        val bgColor = if (currentColorStr.length == 7 && currentColorStr.startsWith("#")) {
+            android.graphics.Color.parseColor(currentColorStr)
+        } else gameSurfaceView.tableColor
+        dialogView.setBackgroundColor(bgColor)
+
+        btnCancel.setOnClickListener {
+            playSound(R.raw.bubble_pop)
+            dialog.dismiss()
+        }
+        btnConfirm.setOnClickListener {
+            playSound(R.raw.pop)
+            dialog.dismiss()
+            onConfirm()
+        }
+
+        dialog.show()
+        val width = (resources.displayMetrics.widthPixels * 0.85).toInt()
+        dialog.window?.setLayout(width, ViewGroup.LayoutParams.WRAP_CONTENT)
+    }
+
     private fun showSettingsMenu() {
         val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_settings, null)
         val btnNewGame = dialogView.findViewById<Button>(R.id.btnNewGame)
@@ -430,17 +463,19 @@ class MainActivity : AppCompatActivity(), GameEventListener {
         }
         
         val currentColorStr = getSharedPreferences("settings", MODE_PRIVATE).getString("bg_color", GameConfig.BACKGROUND_COLOR) ?: GameConfig.BACKGROUND_COLOR
-        val alphaColor = if (currentColorStr.length == 7 && currentColorStr.startsWith("#")) {
-            android.graphics.Color.parseColor("#BF" + currentColorStr.substring(1))
+        val bgColor = if (currentColorStr.length == 7 && currentColorStr.startsWith("#")) {
+            android.graphics.Color.parseColor(currentColorStr)
         } else gameSurfaceView.tableColor
         
-        dialogView.setBackgroundColor(alphaColor)
+        dialogView.setBackgroundColor(bgColor)
 
         btnNewGame.setOnClickListener {
-            dialog.dismiss()
-            viewModel.resetGame()
-            resetButtons()
-            gameSurfaceView.setupNewGame()
+            confirmNewGame {
+                dialog.dismiss()
+                viewModel.resetGame()
+                resetButtons()
+                gameSurfaceView.setupNewGame()
+            }
         }
 
         btnAutoSolve.setOnClickListener {
@@ -486,7 +521,7 @@ class MainActivity : AppCompatActivity(), GameEventListener {
                         .setView(hsView)
                         .create()
                     
-                    hsView.setBackgroundColor(alphaColor)
+                    hsView.setBackgroundColor(bgColor)
                     
                     viewModel.stopTimer()
                     closeButton.setOnClickListener { hsDialog.dismiss() }
@@ -525,12 +560,7 @@ class MainActivity : AppCompatActivity(), GameEventListener {
         val color = android.graphics.Color.parseColor(colorStr)
         gameSurfaceView.tableColor = color
         
-        // Use 75% alpha for dialog backgrounds
-        val alphaColor = if (colorStr.length == 7 && colorStr.startsWith("#")) {
-            android.graphics.Color.parseColor("#BF" + colorStr.substring(1))
-        } else color
-        
-        viewToUpdate?.setBackgroundColor(alphaColor)
+        viewToUpdate?.setBackgroundColor(color)
         findViewById<android.view.View>(R.id.mainLayout).setBackgroundColor(color)
         getSharedPreferences("settings", MODE_PRIVATE).edit().putString("bg_color", colorStr).apply()
     }
@@ -553,19 +583,19 @@ class MainActivity : AppCompatActivity(), GameEventListener {
             .create()
 
         val currentColorStr = getSharedPreferences("settings", MODE_PRIVATE).getString("bg_color", GameConfig.BACKGROUND_COLOR) ?: GameConfig.BACKGROUND_COLOR
-        val alphaColor = if (currentColorStr.length == 7 && currentColorStr.startsWith("#")) {
-            android.graphics.Color.parseColor("#BF" + currentColorStr.substring(1))
+        val bgColor = if (currentColorStr.length == 7 && currentColorStr.startsWith("#")) {
+            android.graphics.Color.parseColor(currentColorStr)
         } else gameSurfaceView.tableColor
 
-        root.setBackgroundColor(alphaColor)
+        root.setBackgroundColor(bgColor)
 
         recyclerView.layoutManager = GridLayoutManager(this, 4)
         recyclerView.adapter = TableColorAdapter(colors) { selectedColor ->
             updateTableColor(selectedColor, settingsDialogView)
-            val newAlphaColor = if (selectedColor.length == 7 && selectedColor.startsWith("#")) {
-                android.graphics.Color.parseColor("#BF" + selectedColor.substring(1))
+            val newBgColor = if (selectedColor.length == 7 && selectedColor.startsWith("#")) {
+                android.graphics.Color.parseColor(selectedColor)
             } else android.graphics.Color.parseColor(selectedColor)
-            root.setBackgroundColor(newAlphaColor)
+            root.setBackgroundColor(newBgColor)
             cpDialog.dismiss()
         }
 
