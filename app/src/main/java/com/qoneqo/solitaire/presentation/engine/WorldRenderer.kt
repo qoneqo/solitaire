@@ -93,7 +93,7 @@ class WorldRenderer(private val am: CardAssetManager) {
 
         // 3. Draw active cards on top (Screen Space)
         activeCardStack?.forEach { card ->
-            canvas.drawBitmap(am.getCardBitmap(card), card.renderX, card.renderY, renderPaint)
+            drawCard(canvas, card, card.renderX, card.renderY)
         }
 
         // 4. Draw Particles
@@ -150,7 +150,7 @@ class WorldRenderer(private val am: CardAssetManager) {
     private fun drawStack(canvas: Canvas, stack: List<Card>, activeCardStack: List<Card>?, selectedStack: List<Card>?, hintedCard: Card?) {
         for (card in stack) {
             if (activeCardStack?.contains(card) != true) {
-                canvas.drawBitmap(am.getCardBitmap(card), card.renderX, card.renderY, renderPaint)
+                drawCard(canvas, card, card.renderX, card.renderY)
                 
                 if (selectedStack?.contains(card) == true) {
                     val rect = RectF(card.renderX, card.renderY, card.renderX + am.cardWidth, card.renderY + am.cardHeight)
@@ -167,6 +167,19 @@ class WorldRenderer(private val am: CardAssetManager) {
                     canvas.drawRoundRect(rect, 10f, 10f, highlightPaint)
                 }
             }
+        }
+    }
+
+    private fun drawCard(canvas: Canvas, card: Card, x: Float, y: Float) {
+        val bitmap = am.getCardBitmap(card)
+        if (card.scale != 1.0f) {
+            canvas.save()
+            canvas.translate(x + am.cardWidth / 2f, y + am.cardHeight / 2f)
+            canvas.scale(card.scale, card.scale)
+            canvas.drawBitmap(bitmap, -am.cardWidth / 2f, -am.cardHeight / 2f, renderPaint)
+            canvas.restore()
+        } else {
+            canvas.drawBitmap(bitmap, x, y, renderPaint)
         }
     }
 }

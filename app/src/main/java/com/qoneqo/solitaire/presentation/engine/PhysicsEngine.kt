@@ -16,6 +16,13 @@ class PhysicsEngine(private val eventListener: GameEventListener?) {
         }
 
         for (card in allCards) {
+            // Smoothly interpolate scale
+            if (abs(card.scale - card.targetScale) > 0.01f) {
+                card.scale += (card.targetScale - card.scale) * 10f * dt
+            } else {
+                card.scale = card.targetScale
+            }
+
             if (card.isSnappingBack) {
                 card.renderX += (card.originalX - card.renderX) * GameConfig.SNAP_SPEED * dt
                 card.renderY += (card.originalY - card.renderY) * GameConfig.SNAP_SPEED * dt

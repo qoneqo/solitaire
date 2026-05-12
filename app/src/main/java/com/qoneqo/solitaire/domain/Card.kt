@@ -40,4 +40,6 @@ data class Card(val suit: Suit, val rank: Rank, var isFaceUp: Boolean) {
     // For calculating the relative touch position
     @Transient var touchOffsetX: Float = 0f
     @Transient var touchOffsetY: Float = 0f
+    @Transient var scale: Float = 1.0f
+    @Transient var targetScale: Float = 1.0f
 }

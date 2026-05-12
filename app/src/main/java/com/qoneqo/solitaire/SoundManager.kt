@@ -11,7 +11,7 @@ class SoundManager(private val context: Context) {
     private val prefs: SharedPreferences = context.getSharedPreferences("solitaire_prefs", Context.MODE_PRIVATE)
     private var soundEnabled = prefs.getBoolean("sound_enabled", true)
     private var musicEnabled = prefs.getBoolean("music_enabled", true)
-    private var musicBackgroundEnabled = prefs.getBoolean("music_background_enabled", true)
+    private var musicBackgroundEnabled = prefs.getBoolean("music_background_enabled", false)
     
     private val soundPool: SoundPool = SoundPool.Builder()
         .setMaxStreams(8) // Increased for overlapping card sounds

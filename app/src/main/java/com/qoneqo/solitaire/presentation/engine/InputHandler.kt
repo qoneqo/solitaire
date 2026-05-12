@@ -21,6 +21,7 @@ class InputHandler(
     private var selectedPileIndex = -1
     private var touchDownX = 0f
     private var touchDownY = 0f
+    private var touchDownTime = 0L
 
 
     fun onTouchEvent(event: MotionEvent, gameState: GameState, layout: GameLayout, screenHeight: Float, scrollOffsetY: Float): Boolean {
@@ -29,7 +30,11 @@ class InputHandler(
 
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
-                return handleActionDown(x, y, gameState, layout, screenHeight, scrollOffsetY)
+                val handled = handleActionDown(x, y, gameState, layout, screenHeight, scrollOffsetY)
+                if (handled) {
+                    activeCardStack?.forEach { it.targetScale = 1.1f }
+                }
+                return handled
             }
             MotionEvent.ACTION_MOVE -> {
                 if (activeCardStack == null) return false
@@ -43,6 +48,7 @@ class InputHandler(
                 return true
             }
             MotionEvent.ACTION_UP -> {
+                activeCardStack?.forEach { it.targetScale = 1.0f }
                 return handleActionUp(x, y, gameState, layout, screenHeight, scrollOffsetY)
             }
         }
@@ -52,6 +58,7 @@ class InputHandler(
     private fun handleActionDown(x: Float, y: Float, gameState: GameState, layout: GameLayout, screenHeight: Float, scrollOffsetY: Float): Boolean {
         touchDownX = x
         touchDownY = y
+        touchDownTime = System.currentTimeMillis()
         val hudHeight = layout.tableauY - 20f
         val effectiveY = y + scrollOffsetY
 
@@ -220,7 +227,10 @@ class InputHandler(
         if (!moved) {
             val dx = x - touchDownX
             val dy = y - touchDownY
-            val isTap = dx * dx + dy * dy < 400 // Allow slight movement for tap
+            val duration = System.currentTimeMillis() - touchDownTime
+            
+            // It's only a tap if it was quick AND didn't move much
+            val isTap = dx * dx + dy * dy < 400 && duration < 500
  
             if (isTap) {
                 // Try auto-move
