@@ -330,7 +330,12 @@ class MainActivity : AppCompatActivity(), GameEventListener {
 
     override fun onPause() {
         super.onPause()
-        // We no longer save random states to avoid overwriting winnable games
+        soundManager.pauseMusic()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        soundManager.resumeMusic()
     }
 
     override fun onScoreChanged(score: Int) {
@@ -440,6 +445,7 @@ class MainActivity : AppCompatActivity(), GameEventListener {
         val btnAutoSolve = dialogView.findViewById<Button>(R.id.btnAutoSolve)
         val btnSound = dialogView.findViewById<Button>(R.id.btnSound)
         val btnMusic = dialogView.findViewById<Button>(R.id.btnMusic)
+        val btnMusicBackground = dialogView.findViewById<Button>(R.id.btnMusicBackground)
         val btnHighScore = dialogView.findViewById<Button>(R.id.btnHighScore)
         val btnDonate = dialogView.findViewById<Button>(R.id.btnDonate)
         val btnExit = dialogView.findViewById<Button>(R.id.btnExit)
@@ -452,6 +458,7 @@ class MainActivity : AppCompatActivity(), GameEventListener {
         btnAutoSolve.text = "Auto Solve: ${if (gameSurfaceView.isAutoSolving) "ON" else "OFF"}"
         btnSound.text = "Sound FX: ${if (soundManager.isSoundEnabled()) "ON" else "OFF"}"
         btnMusic.text = "Ambient Music: ${if (soundManager.isMusicEnabled()) "ON" else "OFF"}"
+        btnMusicBackground.text = "Play Music in Background: ${if (soundManager.isBackgroundMusicEnabled()) "ON" else "OFF"}"
 
         val dialog = AlertDialog.Builder(this, R.style.CozyDialogTheme)
             .setView(dialogView)
@@ -492,6 +499,11 @@ class MainActivity : AppCompatActivity(), GameEventListener {
         btnMusic.setOnClickListener {
             soundManager.setMusicEnabled(!soundManager.isMusicEnabled())
             btnMusic.text = "Ambient Music: ${if (soundManager.isMusicEnabled()) "ON" else "OFF"}"
+        }
+
+        btnMusicBackground.setOnClickListener {
+            soundManager.setBackgroundMusicEnabled(!soundManager.isBackgroundMusicEnabled())
+            btnMusicBackground.text = "Play Music in Background: ${if (soundManager.isBackgroundMusicEnabled()) "ON" else "OFF"}"
         }
 
         btnShowIntro.setOnClickListener {

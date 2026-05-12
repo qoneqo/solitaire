@@ -11,6 +11,7 @@ class SoundManager(private val context: Context) {
     private val prefs: SharedPreferences = context.getSharedPreferences("solitaire_prefs", Context.MODE_PRIVATE)
     private var soundEnabled = prefs.getBoolean("sound_enabled", true)
     private var musicEnabled = prefs.getBoolean("music_enabled", true)
+    private var musicBackgroundEnabled = prefs.getBoolean("music_background_enabled", true)
     
     private val soundPool: SoundPool = SoundPool.Builder()
         .setMaxStreams(8) // Increased for overlapping card sounds
@@ -84,9 +85,21 @@ class SoundManager(private val context: Context) {
         }
     }
 
-    private fun stopMusic() {
+    fun stopMusic() {
         Log.d("SoundManager", "Stopping music.")
         mediaPlayer?.pause()
+    }
+
+    fun pauseMusic() {
+        if (!musicBackgroundEnabled) {
+            stopMusic()
+        }
+    }
+
+    fun resumeMusic() {
+        if (musicEnabled) {
+            startMusic()
+        }
     }
 
     fun setMusicEnabled(enabled: Boolean) {
@@ -120,4 +133,11 @@ class SoundManager(private val context: Context) {
     }
 
     fun isSoundEnabled(): Boolean = soundEnabled
+
+    fun isBackgroundMusicEnabled(): Boolean = musicBackgroundEnabled
+
+    fun setBackgroundMusicEnabled(enabled: Boolean) {
+        musicBackgroundEnabled = enabled
+        prefs.edit().putBoolean("music_background_enabled", enabled).apply()
+    }
 }

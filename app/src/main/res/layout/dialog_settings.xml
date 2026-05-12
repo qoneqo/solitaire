@@ -114,6 +114,17 @@
                 android:textAllCaps="false"/>
 
             <Button
+                android:id="@+id/btnMusicBackground"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Play Music in Background: ON"
+                android:backgroundTint="#c2d0cd"
+                android:textColor="#2d3436"
+                android:layout_marginBottom="8dp"
+                android:textAllCaps="false"/>
+
+            <Button
                 android:id="@+id/btnShowIntro"
                 style="@style/Widget.Material3.Button.TonalButton"
                 android:layout_width="match_parent"
